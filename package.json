@@ -1,0 +1,18 @@
+{
+  "name": "ai-application-automation",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": ["apps/*", "packages/*"],
+  "engines": {"node": ">=22.14.0 <25"},
+  "packageManager": "npm@10.9.2",
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "dev": "npm run dev --workspace @aaa/web",
+    "build": "npm run build --workspace @aaa/web",
+    "typecheck": "tsc --noEmit && npm run typecheck --workspace @aaa/web",
+    "test": "tsx --test tests/*.test.ts",
+    "worker": "tsx apps/worker/src/main.ts"
+  },
+  "devDependencies": {"@types/node": "22.20.1", "typescript": "5.9.3", "tsx": "4.23.13"}
+}

@@ -1,0 +1,6 @@
+{
+  "name": "@aaa/adapters", "version": "0.0.0", "private": true, "type": "module",
+  "exports": {"./database": "./src/database.ts", "./config": "./src/config.ts"},
+  "dependencies": {"@aaa/contracts": "0.0.0", "@aaa/domain": "0.0.0", "better-sqlite3": "13.0.3", "zod": "4.5.4"},
+  "devDependencies": {"@types/better-sqlite3": "9.6.0"}
+}

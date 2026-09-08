@@ -3,8 +3,9 @@
 Version: 1.0. Status: ready for implementation planning. Updated: 2026-09-08.
 
 This package specifies the application; it does not implement it. Examples are
-illustrative contracts. There are no runnable services, migrations, generated
-schemas, or application tests in this repository yet.
+illustrative contracts. The repository now includes a development scaffold;
+see the [development guide](../development.md) for implemented foundations and
+remaining release gates. Acceptance scenarios below are not claims of completion.
 
 ## Reading order
 

@@ -1,0 +1,4 @@
+{
+  "name": "@aaa/worker", "version": "0.0.0", "private": true, "type": "module",
+  "dependencies": {"@aaa/adapters": "0.0.0", "@aaa/contracts": "0.0.0", "@aaa/domain": "0.0.0", "playwright": "1.63.0"}
+}

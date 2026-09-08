@@ -1,0 +1,10 @@
+.git
+node_modules
+**/node_modules
+**/.next
+**/*.tsbuildinfo
+.env
+.secrets
+resources
+output
+docs

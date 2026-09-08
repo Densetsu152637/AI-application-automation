@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "target": "ES2022", "lib": ["ES2022", "DOM"],
+    "module": "NodeNext", "moduleResolution": "NodeNext",
+    "strict": true, "noUncheckedIndexedAccess": true,
+    "esModuleInterop": true, "skipLibCheck": true, "noEmit": true,
+    "allowImportingTsExtensions": true
+  },
+  "include": ["packages/**/*.ts", "apps/worker/**/*.ts", "scripts/**/*.ts", "tests/**/*.ts"]
+}
