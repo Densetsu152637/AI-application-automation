@@ -115,7 +115,7 @@ egress proxy. Resolve hosts at connection time, reject any non-public result, an
 connect to an approved resolved address without a second uncontrolled DNS lookup.
 Recheck every new connection and redirect. Block loopback, private, link-local,
 multicast, unspecified, reserved infrastructure ranges, IPv4-mapped equivalents,
-cloud metadata, Docker service names, and the LM host. Disable browser proxy
+cloud metadata, Docker service names, and the inference service host. Disable browser proxy
 bypass, QUIC, and direct WebRTC network access. No browser certificate-error bypass.
 
 Playwright request routing MUST additionally enforce workflow origins on
@@ -127,10 +127,11 @@ configuration MUST reject that test allowance.
 
 ## AGENT-006 — Common model request and result
 
-Model requests MUST use the configured local /v1/chat/completions endpoint with
+Model requests MUST use the internal Unsloth service's /v1/chat/completions endpoint with
 JSON-schema response formatting, stream=false, and temperature=0. This interface
-supports structured responses, but the configured model must be checked rather
-than assumed capable. [LM Studio structured output](https://lmstudio.ai/docs/developer/openai-compat/structured-output).
+supports structured responses, but the deployed Qwen3.5 9B model must be checked
+rather than assumed capable. The service adapter MUST verify structured-output
+compatibility during diagnostics.
 
 Internal ModelRequest = {schemaVersion:1, requestId:UUID, contract: enum below,
 contractVersion:1, promptVersion:Text, modelConfigHash:Hash, deadline:Instant,

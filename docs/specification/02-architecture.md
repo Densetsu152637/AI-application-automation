@@ -14,7 +14,7 @@ flowchart LR
     G --> V[Protected browser view]
     W --> D[(SQLite)]
     K[TypeScript worker] --> D
-    K --> L[External LM Studio]
+    K --> L[Internal Unsloth inference service\nQwen3.5 9B / 32 Ki active tokens]
     K --> B[Chromium / Playwright]
     V --> B
     B --> E[Validated browser egress]
@@ -23,7 +23,10 @@ flowchart LR
     K --> O[Exports and artifact snapshots]
 ~~~
 
-Gateway, web, and worker MUST be separate Compose services. The worker service
+Gateway, web, worker, and inference service MUST be separate Compose services.
+The inference service MUST run Unsloth with the pinned Qwen3.5 9B target and a
+32 Ki active-token attention budget. It MUST expose only an internal
+OpenAI-compatible HTTP interface. The worker service
 owns the browser-view bridge, virtual display, and browser egress proxy. These
 are internal processes, not additional published services. SQLite is a file on
 a shared local volume, not a network database service.
@@ -103,9 +106,9 @@ snapshot explains previous decisions; it does not preserve revoked authority.
 
 ## ARCH-008 — Local data boundaries
 
-Only the worker's model adapter may send prompts to the configured LM Studio
-address. Job-site browser requests MUST not reach that address or other local
-infrastructure. Only application-required answers and approved attachments may
+Only the worker's model adapter may send prompts to the internal Unsloth inference
+service. Job-site browser requests MUST not reach the inference service or other
+local infrastructure. Only application-required answers and approved attachments may
 leave through job-site forms. Model requests MUST not contain browser cookies,
 administrator secrets, or unrelated complete resource libraries. No third-party
 analytics or remote error-reporting service is part of v1.
@@ -116,8 +119,9 @@ Use a workspace with logical packages for web, worker, contracts, domain, and
 adapters. Implement runtime contracts with Zod and emit model JSON schemas from
 the same definitions; SQLite access uses a synchronous SQLite driver behind the
 repository port and explicit migrations. The domain remains driver-independent.
-Use Playwright Chromium and direct HTTP JSON requests to LM Studio. Redis,
-microservice messaging, vector databases, and an agent framework are not required.
+Use Playwright Chromium and direct HTTP JSON requests to the internal inference
+service. The Unsloth service is an intentional microservice boundary; Redis,
+additional orchestration, vector databases, and an agent framework are not required.
 
 The first implementation change MUST record exact compatible dependency versions
 and a lockfile. This specification intentionally does not freeze changing package

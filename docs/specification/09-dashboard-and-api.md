@@ -163,7 +163,7 @@ A resolved task does not automatically approve or submit an application.
 
 ## API-008 — Settings and diagnostics
 
-GET /settings MUST return {revision,lm:{baseUrl,modelId,timeoutSeconds,contextTokens,
+GET /settings MUST return {revision,llm:{baseUrl,modelId,timeoutSeconds,contextTokens,
 outputTokens,hasApiKey},timezone,retention:{diagnosticDays,runLogDays}}. Secret values
 and secret file paths are omitted. PATCH /settings uses If-Match and only these
 non-secret editable fields. Base URL changes require a new model diagnostic and
@@ -202,7 +202,7 @@ labels, and actionable errors.
 
 | Screen | Required interaction and state |
 |---|---|
-| Setup | Login, confirm timezone, configure/test LM Studio, show resource mount status; incomplete setup blocks dependent actions only |
+| Setup | Login, confirm timezone, configure/test the Unsloth inference service, show resource mount status; incomplete setup blocks dependent actions only |
 | Searches | Edit criteria strengths, separate arrangement/category, sources, limits, schedule, and policy; revision conflict preserves unsaved edits |
 | Opportunities | Filter new/seen/repost, inspect evidence, dismiss, resolve relations, enqueue; empty labels reflect DISC-012 distinctions |
 | Resources/profile | Reindex, inspect source segments, confirm/reject/conflict-resolve facts, choose resumes; unsupported files remain visible |

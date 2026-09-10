@@ -4,7 +4,9 @@
 
 ## DEP-001 — Compose services and publication
 
-Compose MUST run an nginx gateway, Next.js web service, and TypeScript worker.
+Compose MUST run an nginx gateway, Next.js web service, TypeScript worker, and
+separate Unsloth inference service. The inference service is attached only to
+the internal backend network and MUST have no host port mapping.
 Only gateway port 3000 is published, bound to 127.0.0.1. The gateway routes normal
 traffic to web and protected intervention traffic to the worker bridge. Worker
 control, VNC, DevTools, and proxy ports MUST not have host mappings. Do not mount
@@ -43,7 +45,7 @@ contracts, not files created by this documentation package.
 | /output | Host bind; worker read-write, web read-only | Exports and retained artifact snapshots |
 | /diagnostics | Worker volume; authenticated mediated reads | Expiring screenshots and failure details |
 | /tmp | Ephemeral bounded storage | Parsing, temporary downloads, browser scratch |
-| /run/secrets | Read-only deployment secrets | Admin secret, optional LM token |
+| /run/secrets | Read-only deployment secrets | Admin secret, optional inference token |
 
 The web service MUST serve artifacts by database ID and verified path, never
 arbitrary user-supplied paths. Original resources MUST not be edited or deleted
@@ -66,12 +68,12 @@ in SQLite; environment values below seed them only when no record exists.
 | APP_ORIGIN | URL; http://localhost:3000 | Exact origin for requests and cookies; localhost publication by default |
 | ADMIN_SECRET_FILE | Absolute secret path; required | At least 32 random bytes encoded as text; no compiled default |
 | INTERNAL_SECRET_FILE | Absolute secret path; required | Separate 32-byte random service credential shared by web and worker |
-| LM_BASE_URL | URL; http://host.docker.internal:1234/v1 | HTTP(S), no userinfo/query/fragment; configured trusted infrastructure |
-| LM_MODEL_ID | Nonempty string; setup required | Must appear in model diagnostics; never choose an arbitrary fallback |
-| LM_API_KEY_FILE | Absolute secret path or unset | Optional authorization token |
-| LM_TIMEOUT_SECONDS | Integer; 120 | 10..600, per request |
-| LM_CONTEXT_TOKENS | Integer; 8192 | At least 4096; no greater than verified model capacity |
-| LM_OUTPUT_TOKENS | Integer; 2048 | At least 256 and at most half the context budget |
+| LLM_BASE_URL | URL; http://inference:8000/v1 | Internal HTTP(S) endpoint; no userinfo/query/fragment; inference service only |
+| LLM_MODEL_ID | String; Qwen3.5-9B | Must resolve to the deployed Qwen3.5 9B target and appear in diagnostics |
+| LLM_API_KEY_FILE | Absolute secret path or unset | Optional service-to-service authorization token |
+| LLM_TIMEOUT_SECONDS | Integer; 120 | 10..600, per request |
+| LLM_CONTEXT_TOKENS | Integer; 32768 | Fixed v1 active-token attention budget; must not exceed verified service capacity |
+| LLM_OUTPUT_TOKENS | Integer; 2048 | At least 256 and at most half the context budget |
 | APP_TIMEZONE | IANA string; UTC until setup confirmation | Browser suggestion must be confirmed |
 | DB_BUSY_TIMEOUT_MS | Integer; 5000 | Fixed v1 operational default |
 | DIAGNOSTIC_RETENTION_DAYS | Integer; 7 | 1..90 |
@@ -81,18 +83,19 @@ in SQLite; environment values below seed them only when no record exists.
 Browser/inference concurrency is fixed at one in v1. Scan limits, schedules,
 source origins, and submission caps are search/policy fields, not global secrets.
 
-## DEP-005 — LM Studio connectivity
+## DEP-005 — Unsloth inference service
 
-LM Studio MUST remain outside the application containers. Docker Desktop users
-use host.docker.internal; Linux Compose MUST supply the host-gateway mapping.
-The setup guide MUST distinguish container localhost from host localhost and
-explain that the LM listener must be reachable on the selected interface without
-requiring public exposure. Users may configure another private-network host.
-[Docker host networking guidance](https://docs.docker.com/desktop/features/networking/).
+The Unsloth inference service MUST run as a separate Compose service. It MUST
+load the targeted Qwen3.5 9B model and expose an internal OpenAI-compatible
+`/v1/chat/completions` endpoint. The service MUST be reachable by its Compose
+DNS name (`inference`) and MUST not be published to the host or public network.
+GPU allocation, model weights, and the Unsloth runtime belong to this service,
+not to the web or browser worker images.
 
 Connectivity diagnostics MUST separately report DNS/TCP failure, authentication
-failure, missing model, timeout, and invalid structured response. The application
-MUST NOT download or change a user's model automatically.
+failure, missing/incompatible model, insufficient 32 Ki capacity, timeout, and
+invalid structured response. The application MUST NOT download, mutate, or
+silently substitute the target model automatically.
 
 ## DEP-006 — Authentication and sessions
 
@@ -129,8 +132,9 @@ fifteen idle minutes; the task persists and a new session can be opened later.
 
 Web startup MUST acquire the migration lock, apply ordered migrations, and release
 it before worker writes are enabled. The worker MUST wait for the expected schema
-version. Both services verify storage access; worker also verifies Chromium and
-model diagnostics. Missing model configuration degrades worker readiness but
+version. Both application services verify storage access; worker also verifies
+Chromium and inference diagnostics. An unavailable inference service or missing
+model degrades worker readiness but
 MUST allow setup and history access. Failed schema/storage checks are fatal for
 domain writes. Health details MUST be available only to the authenticated user.
 
@@ -156,8 +160,8 @@ paused until the user resumes it. A backup is sensitive local data.
 
 ## DEP-010 — Example deployment failures
 
-With LM Studio bound only to an unreachable interface, setup MUST show
-MODEL_UNAVAILABLE while history remains readable. With an output mount that is
+With the inference service unreachable, setup MUST show MODEL_UNAVAILABLE while
+history remains readable. With an output mount that is
 read-only to the worker, scans MUST not claim export success. With a stale worker
 image, readiness MUST report schema/browser incompatibility. A published VNC or
 DevTools port is an invalid deployment even if the dashboard login works.

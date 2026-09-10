@@ -44,7 +44,7 @@ npm run build
 ```
 
 The web development server binds to 127.0.0.1:3000; stop the Compose gateway first
-to release that port. Its placeholder requires no LM Studio or database.
+to release that port. Its placeholder requires no inference service or database.
 The worker command is intended for the Linux container with the documented mounts
 and Xvfb. It checks storage, schema compatibility, and a sandboxed headed Chromium
 launch, then idles without scheduling or browser navigation. SIGTERM closes it.
@@ -81,17 +81,19 @@ and disable clipboard and file transfer. Before job-site navigation, implement
 AGENT-005 validated egress, including private-network and DNS-rebinding rejection.
 The current worker network is infrastructure connectivity, not browser egress enforcement.
 
-Set `LM_BASE_URL` and `LM_MODEL_ID` in `.env` when implementing model diagnostics.
-LM Studio stays on the host; container `localhost` refers to the container itself.
-`host.docker.internal` uses Docker Desktop host addressing and the supplied Linux
-`host-gateway` mapping. Configure the LM listener on an interface reachable from
-Docker without exposing it publicly. The scaffold does not contact or download a model.
-An empty model ID is accepted for future setup and is not model readiness.
+The future Compose deployment will run Unsloth as the `inference` service and
+target Qwen3.5 9B with `LLM_CONTEXT_TOKENS=32768` (32 Ki active attention
+tokens). The worker will use the internal `LLM_BASE_URL` and the inference
+service's OpenAI-compatible `/v1/chat/completions` endpoint. The inference
+service is not published through the gateway. The scaffold does not yet start,
+contact, or download a model; an empty model ID is accepted for future setup
+and is not model readiness.
 
-For an optional LM token, add a Compose secret backed by an ignored local file,
-mount it only on worker, and set worker `LM_API_KEY_FILE` to its absolute mounted
+For an optional inference token, add a Compose secret backed by an ignored local file,
+mount it only on worker, and set worker `LLM_API_KEY_FILE` to its absolute mounted
 path. Never place the token itself in `.env` or an image. Runtime settings
-versioning, model capacity verification and authenticated diagnostics remain feature work.
+versioning, GPU/runtime packaging, model capacity verification and authenticated
+diagnostics remain feature work.
 
 ## Version record
 
@@ -145,4 +147,5 @@ The gateway has a separate edge network because an internal-only Docker network
 does not provide host port publication on the tested Docker version. Application
 communication still uses internal frontend/backend networks. Numeric UID 1000 is
 explicit throughout; the upstream image's `pwuser` name currently resolves to 1001.
-These checks establish scaffold startup only, not feature acceptance or LM readiness.
+These checks establish scaffold startup only, not feature acceptance or Unsloth/Qwen
+inference readiness.

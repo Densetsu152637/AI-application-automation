@@ -47,7 +47,7 @@ to every record/message in the cited sections, not only the illustrative JSON.
 | AT-010 | Model offline, one source fails, and output writer fails independently | Dashboard available; unrelated results persist; failure does not become success | ARCH-010, PROD-008 |
 | AT-011 | Inspect Compose exposure, mounts, user, sandbox, and browser versions | Only localhost gateway published; read-only resources; no Docker socket; sandbox launches under non-root; browser versions match | DEP-001, DEP-002, DEP-003 |
 | AT-012 | Seed settings, change runtime settings, restart; enter invalid values | Stored settings win after initialization; all ranges checked; no secret returned; unconfigured model does not block setup | DEP-004, API-008 |
-| AT-013 | Exercise Desktop/Linux host addressing and unreachable LM listener | Correct host mapping works; unreachable/auth/missing-model cases are distinct diagnostics; no model download | DEP-005, DEP-010 |
+| AT-013 | Exercise inference-service DNS and unreachable endpoint | Compose DNS works; unreachable/auth/missing-model/capacity cases are distinct diagnostics; no model download | DEP-005, DEP-010 |
 | AT-014 | Login, fail login repeatedly, expire/rotate/logout session, submit cross-origin mutation | Limits enforced; hashes only in storage; cookie attributes correct; origin rejected; session invalidated | DEP-006, API-001 |
 | AT-015 | Request/replay/expire a viewer ticket; disconnect while human owns browser | Only one valid upgrade; agent suspended before control; revocation disconnects; task persists | DEP-007, API-007 |
 | AT-016 | Start with failed migration, unwritable DB/output, then missing model | Fatal write barriers for schema/storage; degraded model setup remains usable; accurate health | DEP-008, ARCH-010 |
@@ -77,7 +77,7 @@ to every record/message in the cited sections, not only the illustrative JSON.
 | AT-040 | Observe frames, repeated labels, passwords, dynamic form changes | Scoped stable references; password omitted; ambiguity/staleness forces reobservation | AGENT-001, AGENT-002 |
 | AT-041 | Exercise every allowed action plus script/selector/path/coordinate actions | Valid union dispatches; invalid actions have zero side effects; readback verifies edits | AGENT-003, AGENT-004 |
 | AT-042 | Ambiguous next/submit/Enter controls and recognized search form | Application-affecting final/unknown actions guarded; search query submission permitted | AGENT-004 |
-| AT-043 | Navigate/redirect/popup/subresource/WS to private IPv4/IPv6, mapped addresses, DNS rebinding, LM host | Browser requests blocked at egress; configured model adapter alone can reach LM; fixture allowance absent in production | AGENT-005, ARCH-008, QA-001 |
+| AT-043 | Navigate/redirect/popup/subresource/WS to private IPv4/IPv6, mapped addresses, DNS rebinding, inference host | Browser requests blocked at egress; only the worker adapter can reach inference; fixture allowance absent in production | AGENT-005, ARCH-008, QA-001 |
 | AT-044 | Send each of eight model contracts with valid, missing, extra, and wrong evidence fields | Closed schemas and domain validation work; model does not choose authority or final state | AGENT-006, AGENT-007 |
 | AT-045 | Combine invalid JSON, repair success/failure, timeouts, and network retries | Two repairs max, two transport retries max, five total HTTP attempts; task pauses with inspectable error | AGENT-008 |
 | AT-046 | Required context exceeds budget; tokenizer absent; observation truncated | Conservative accounting; chunking preserves refs; required omission blocks decision | AGENT-009 |
@@ -130,7 +130,8 @@ The implementation handoff MUST include a repeatable demonstration using fiction
 resources and a controlled fixture site:
 
 1. Start the future Compose deployment and confirm only localhost gateway exposure.
-2. Log in, confirm timezone, configure host LM Studio, and pass model diagnostics.
+2. Log in, confirm timezone, start the Unsloth inference service with the targeted
+   Qwen3.5 9B / 32 Ki configuration, and pass model diagnostics.
 3. Reindex resources, inspect provenance, confirm facts, and choose a resume.
 4. Create a search with required title and part-time internship criteria.
 5. Run discovery; inspect match/reject/review/seen outcomes and the immutable export.

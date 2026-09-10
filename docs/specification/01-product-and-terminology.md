@@ -8,8 +8,9 @@ The system MUST let one applicant discover vacancies on configured websites,
 assess relevance with local inference, retain seen history, export new matches,
 and independently prepare or submit applications. The deliverable described by
 this repository is written specifications only. Future application implementation
-MUST use TypeScript, Docker Compose, Next.js, a separate worker, SQLite, and LM
-Studio as described in this package.
+MUST use TypeScript, Docker Compose, Next.js, a separate worker, SQLite, and a
+separate Unsloth inference service targeting Qwen3.5 9B with 32 Ki active
+attention tokens as described in this package.
 
 The initial release MUST NOT include multi-user accounts, public internet
 deployment, cloud inference fallback, general web discovery of new job sources,

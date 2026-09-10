@@ -1,7 +1,7 @@
 # AI application automation
 
 A locally hosted TypeScript application foundation for software that discovers jobs,
-matches them using LM Studio, exports new opportunities, and optionally prepares
+matches them using a dedicated Unsloth inference service, exports new opportunities, and optionally prepares
 and submits applications from confirmed applicant resources.
 
 **Status: development scaffold. Feature implementation and release gates remain open.**
@@ -25,6 +25,9 @@ chapters covering requirements, architecture, written data schemas, browser and
 model contracts, recovery, dashboard APIs, and acceptance scenarios.
 
 The intended deployment uses Docker Compose, Next.js, a separate TypeScript
-worker, Chromium/Playwright, SQLite, and an external local LM Studio server.
+worker, Chromium/Playwright, SQLite, and a separate internal Unsloth inference
+service targeting Qwen3.5 9B with 32 Ki active attention tokens. The inference
+service is the sole model-serving boundary; it is not exposed through the public
+gateway.
 Implementation agents should follow the dependency order and release gates in
 [chapter 10](docs/specification/10-acceptance-and-handoff.md).

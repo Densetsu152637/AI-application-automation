@@ -47,7 +47,8 @@ normative unless expressly marked illustrative.
 - One local applicant and one authenticated dashboard user.
 - Docker Compose; a Next.js web service and a separate TypeScript worker.
 - SQLite operational state and immutable JSON opportunity exports.
-- LM Studio outside the containers; no hosted inference fallback.
+- Dedicated Unsloth inference microservice inside Compose; Qwen3.5 9B target with
+  32 Ki active-token attention; no hosted inference fallback.
 - One automated browser workflow and one model request at a time.
 - Configured source websites; page-structure reasoning, with human intervention.
 - Confirmed profile facts; existing resumes unchanged; generated cover letters.

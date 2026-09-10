@@ -437,7 +437,7 @@ conventions from DATA-001 apply.
 
 | Record | Fields and constraints |
 |---|---|
-| ApplicationSettings (revisioned singleton) | lm: {baseUrl:URL,modelId:Text or null,timeoutSeconds:integer,contextTokens:integer,outputTokens:integer}; timezone:Text; timezoneConfirmed:boolean; diagnosticDays:integer; runLogDays:integer. Ranges and defaults in DEP-004; secret values excluded |
+| ApplicationSettings (revisioned singleton) | llm: {baseUrl:URL,modelId:Text or null,timeoutSeconds:integer,contextTokens:integer,outputTokens:integer}; timezone:Text; timezoneConfirmed:boolean; diagnosticDays:integer; runLogDays:integer. Ranges and defaults in DEP-004; secret values excluded |
 | AdministratorPrincipal (immutable singleton) | id:UUID; createdAt:Instant. Created at initialization and stable across sessions |
 | DashboardSession (mutable) | principalId:UUID; tokenHash:Hash unique; secretGeneration:Hash; expiresAt:Instant; revokedAt:Instant or null |
 | ViewerTicket (mutable) | tokenHash:Hash unique; sessionId:UUID; interventionId:UUID; browserGeneration:integer; expiresAt:Instant; consumedAt:Instant or null; revokedAt:Instant or null |
