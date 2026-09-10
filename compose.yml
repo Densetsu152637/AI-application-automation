@@ -101,6 +101,7 @@ services:
       context: ./services/inference
     environment:
       MODEL_ID: Qwen3.5-9B
+      MODEL_SEARCH_ROOT: /models
       MAX_MODEL_LEN: '32768'
       MODEL_IDLE_SECONDS: ${MODEL_IDLE_SECONDS:-300}
       MODEL_LOAD_TIMEOUT_SECONDS: ${MODEL_LOAD_TIMEOUT_SECONDS:-180}
@@ -127,6 +128,10 @@ services:
     expose: ['8000']
     volumes:
       - model-cache:/home/inference/.cache/huggingface
+      - type: bind
+        source: ${MODEL_SEARCH_ROOT:-D:/AI-Models}
+        target: /models
+        read_only: true
     restart: unless-stopped
     networks: [inference]
     healthcheck:

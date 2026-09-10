@@ -18,6 +18,9 @@ test('Unsloth inference loads lazily and unloads idle model memory', () => {
   assert.match(source, /active_requests/);
   assert.match(source, /generation_lock/);
   assert.match(source, /local_files_only=True/);
+  assert.match(source, /MODEL_SEARCH_ROOT/);
+  assert.match(source, /rglob\(model_name\)/);
+  assert.match(source, /config\.json/);
   assert.match(source, /INFERENCE_AUTH_SECRET_FILE/);
   assert.match(source, /MODEL_SCHEMA_MISMATCH/);
   assert.match(source, /MODEL_IN_USE/);
@@ -45,6 +48,8 @@ test('inference is isolated to the worker network and model requests are bounded
   assert.match(compose, /networks: \[frontend, backend\]/);
   assert.match(compose, /count: 1/);
   assert.match(compose, /INFERENCE_MEMORY_LIMIT/);
+  assert.match(compose, /source: \$\{MODEL_SEARCH_ROOT:-D:\/AI-Models\}/);
+  assert.match(compose, /target: \/models/);
   assert.match(source, /@app\.get\("\/ready"\)/);
   assert.match(source, /MODEL_LOAD_FAILED/);
   assert.match(source, /message exceeds 32768 bytes/);

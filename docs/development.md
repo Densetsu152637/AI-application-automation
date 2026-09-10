@@ -110,6 +110,10 @@ credential. Provision the exact target weights into the named model cache before
 startup; the runtime uses local files only and reports a degraded model state if
 the cache is missing or incompatible. Model readiness is separate from dashboard
 availability.
+Alternatively, set `MODEL_SEARCH_ROOT` to a host directory containing model
+subdirectories. The default Compose mapping is `D:/AI-Models` to `/models`; the
+inference service recursively searches that read-only mount for a child directory
+named like `MODEL_ID` with a `config.json`, then loads it directly.
 
 The worker is the only application service attached to the dedicated inference
 network. The dashboard asks the worker’s authenticated internal health endpoint

@@ -3,6 +3,7 @@ import gc
 import hmac
 import json
 import os
+from pathlib import Path
 import threading
 import time
 from typing import Any
@@ -13,6 +14,7 @@ from pydantic import BaseModel, Field, model_validator
 TARGET_MODEL_ID = "Qwen3.5-9B"
 ACTIVE_ATTENTION_TOKENS = 32768
 MODEL_ID = os.getenv("MODEL_ID", TARGET_MODEL_ID)
+MODEL_SEARCH_ROOT = os.getenv("MODEL_SEARCH_ROOT", "/models").strip()
 MAX_MODEL_LEN = int(os.getenv("MAX_MODEL_LEN", str(ACTIVE_ATTENTION_TOKENS)))
 MODEL_IDLE_SECONDS = int(os.getenv("MODEL_IDLE_SECONDS", "300"))
 MODEL_LOAD_TIMEOUT_SECONDS = int(os.getenv("MODEL_LOAD_TIMEOUT_SECONDS", "180"))
@@ -116,12 +118,23 @@ def load_model() -> None:
         raise RuntimeError("INFERENCE_CONFIGURATION_INVALID")
     from unsloth import FastLanguageModel
     loaded_model, loaded_tokenizer = FastLanguageModel.from_pretrained(
-        model_name=MODEL_ID, max_seq_length=MAX_MODEL_LEN, load_in_4bit=True, local_files_only=True,
+        model_name=_resolve_model_source(), max_seq_length=MAX_MODEL_LEN, load_in_4bit=True, local_files_only=True,
     )
     FastLanguageModel.for_inference(loaded_model)
     with model_lock:
         model, tokenizer = loaded_model, loaded_tokenizer
         last_used_at = time.monotonic()
+
+def _resolve_model_source() -> str:
+    """Find MODEL_ID in the configured local model tree before using the HF cache."""
+    root = Path(MODEL_SEARCH_ROOT)
+    if not root.is_dir():
+        return MODEL_ID
+    model_name = Path(MODEL_ID).name
+    for candidate in root.rglob(model_name):
+        if candidate.is_dir() and (candidate / "config.json").is_file():
+            return str(candidate)
+    return MODEL_ID
 
 def unload_model() -> None:
     global model, tokenizer, last_used_at
