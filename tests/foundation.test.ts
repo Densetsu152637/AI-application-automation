@@ -14,16 +14,17 @@ test('migration is repeatable and refuses incompatible schema', () => {
     assert.throws(() => assertSchema(db), /SCHEMA_INCOMPATIBLE/);
     migrate(db); migrate(db); assertSchema(db);
     assert.equal(db.pragma('journal_mode', { simple: true }), 'wal');
-    assert.deepEqual(db.prepare('SELECT count(*) AS count FROM schema_migrations').get(), { count: 1 });
-    db.pragma('user_version = 2');
+    assert.deepEqual(db.prepare('SELECT count(*) AS count FROM schema_migrations').get(), { count: 16 });
+    db.pragma('user_version = 17');
     assert.throws(() => migrate(db), /SCHEMA_INCOMPATIBLE/);
   } finally { db.close(); rmSync(dir, { recursive: true }); }
 });
 
 test('deployment accepts unconfigured model but rejects invalid budgets and infrastructure URLs', () => {
   const base = { ADMIN_SECRET_FILE: join(tmpdir(), 'admin'), INTERNAL_SECRET_FILE: join(tmpdir(), 'internal') };
-  assert.equal(deploymentSchema.parse(base).LM_MODEL_ID, '');
-  for (const overrides of [{ LM_OUTPUT_TOKENS: 5000 }, { LM_BASE_URL: 'http://user:pass@localhost/v1' }, { APP_TIMEZONE: 'bad/timezone' }, { DB_BUSY_TIMEOUT_MS: 1 }]) {
+  assert.equal(deploymentSchema.parse(base).LLM_MODEL_ID, 'Qwen3.5-9B');
+  assert.equal(deploymentSchema.parse(base).LLM_CONTEXT_TOKENS, 32768);
+  for (const overrides of [{ LLM_OUTPUT_TOKENS: 20000 }, { LLM_BASE_URL: 'http://user:pass@localhost/v1' }, { APP_TIMEZONE: 'bad/timezone' }, { DB_BUSY_TIMEOUT_MS: 1 }]) {
     assert.equal(deploymentSchema.safeParse({ ...base, ...overrides }).success, false);
   }
 });

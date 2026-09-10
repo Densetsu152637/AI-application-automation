@@ -1,8 +1,9 @@
 # Development foundation
 
-This scaffold implements the workspace and deployment skeleton from ARCH-009
-and DEP-001 through DEP-008. It does **not** complete implementation gates 1 or 2.
-The authoritative feature contracts remain in [the specification](specification/README.md).
+This repository contains the deployment foundation plus working slices of the
+dashboard, durable operations, discovery, exports, applications, interventions,
+and schedules. The authoritative feature contracts and remaining acceptance
+criteria remain in [the specification](specification/README.md).
 
 ## Start locally
 
@@ -22,10 +23,10 @@ Compose mounts them read-only; they never enter image build contexts.
 On Linux, ensure UID 1000 can read the secret/resource binds and write `output/`.
 Named volume directories are initialized with UID 1000 ownership by the images.
 
-Visit http://localhost:3000 for the scaffold login placeholder. `/health/live`
-returns an empty 204 response. These are liveness checks, not feature readiness.
-No personal information is served. Domain APIs return 503 at the gateway,
-intervention paths return 403, and internal paths return 404.
+Visit http://localhost:3000 for the authenticated dashboard. `/health/live`
+returns an empty 204 response and is only a liveness check. The dashboard and
+its `/api` routes require the administrator session; health and model diagnostics
+still have degraded/unavailable states while services start or are misconfigured.
 
 ```sh
 docker compose logs web worker
@@ -44,26 +45,29 @@ npm run build
 ```
 
 The web development server binds to 127.0.0.1:3000; stop the Compose gateway first
-to release that port. Its placeholder requires no inference service or database.
-The worker command is intended for the Linux container with the documented mounts
-and Xvfb. It checks storage, schema compatibility, and a sandboxed headed Chromium
-launch, then idles without scheduling or browser navigation. SIGTERM closes it.
+to release that port. The worker command is intended for the Linux container with
+the documented mounts and Xvfb. It checks storage and schema compatibility,
+claims queued operations, and runs the implemented resource, discovery/export,
+model-diagnostic, and application-transition paths. Browser form automation and
+validated browser egress remain bounded work. SIGTERM closes the worker.
 
 | Path | Responsibility |
 | --- | --- |
-| `apps/web` | Next.js UI and future Node API handlers |
-| `apps/worker` | Independent lifecycle and future durable work execution |
+| `apps/web` | Next.js UI and authenticated `/api` route handlers |
+| `apps/worker` | Durable operation claimant, discovery/export worker, and lifecycle checks |
 | `packages/contracts` | Strict runtime validators and derived JSON schemas |
 | `packages/domain` | Pure typed domain rules and injected ports |
-| `packages/adapters` | Configuration, SQLite, future infrastructure adapters |
+| `packages/adapters` | Configuration, SQLite, repositories, resources, artifacts, LLM and scheduling adapters |
 | `packages/adapters/migrations` | Ordered explicit SQL migrations |
 | `infra` | Images, gateway configuration, Chromium seccomp profile |
 | `tests` | Migration and boundary validation checks |
 
 Web startup runs migrations under `BEGIN IMMEDIATE` before serving traffic.
 Worker startup follows web health and independently checks the expected schema.
-Migration 001 creates only the migration ledger. Add domain tables and transaction
-tests in gate 1; do not treat this ledger as the complete persistence model.
+Migrations 001 through 016 create the current foundation, discovery, profile,
+application, operation-target, event, intervention, API transport, policy,
+run-control, and durable opportunity-state tables. Scheduler tables are
+provisioned by the scheduler adapter because they are an API-owned contract.
 The domain package must not import framework, database, filesystem or environment APIs.
 
 ## Deployment boundaries
@@ -79,15 +83,17 @@ Xvfb, x11vnc, websockify and noVNC are installed. Only Xvfb starts. Before enabl
 the bridge, implement DEP-007 tickets/session revocation, exclusive human ownership,
 and disable clipboard and file transfer. Before job-site navigation, implement
 AGENT-005 validated egress, including private-network and DNS-rebinding rejection.
-The current worker network is infrastructure connectivity, not browser egress enforcement.
+The worker uses the implemented validated egress boundary for browser-capable
+operations; the browser bridge remains disabled until its DEP-007 ownership
+controls are enabled.
 
-The future Compose deployment will run Unsloth as the `inference` service and
-target Qwen3.5 9B with `LLM_CONTEXT_TOKENS=32768` (32 Ki active attention
-tokens). The worker will use the internal `LLM_BASE_URL` and the inference
-service's OpenAI-compatible `/v1/chat/completions` endpoint. The inference
-service is not published through the gateway. The scaffold does not yet start,
-contact, or download a model; an empty model ID is accepted for future setup
-and is not model readiness.
+Compose runs Unsloth as the internal `inference` service, targeting Qwen3.5-9B
+with `MAX_MODEL_LEN`/`LLM_CONTEXT_TOKENS=32768` active context tokens. It exposes
+`GET /health`, `GET /v1/models`, and `POST /v1/chat/completions` only on the
+internal backend network. The worker uses the internal
+`LLM_BASE_URL` (default `http://inference:8000/v1`); the inference service has no
+host port or gateway route. The first start may load or download weights into the
+named model cache, and model readiness is separate from dashboard availability.
 
 For an optional inference token, add a Compose secret backed by an ignored local file,
 mount it only on worker, and set worker `LLM_API_KEY_FILE` to its absolute mounted
@@ -123,29 +129,55 @@ The vendored seccomp profile is from
 [Playwright Docker guidance](https://playwright.dev/docs/docker); web setup follows
 [Next.js installation guidance](https://nextjs.org/docs/app/getting-started/installation).
 
-## Remaining implementation
+## Current implementation status
 
-Follow QA-006 in order: domain records, repository ports, identities, leases,
-operations and artifact ledgers; then sessions, setup, authenticated readiness and
-protected browser takeover. Scheduling, model calls, resource parsing, discovery,
-exports, application preparation/submission, retention and backup are not implemented.
-Do not use the foundation against employer forms or present it as release-ready.
+Implemented and covered by focused tests are the authenticated session, settings,
+resource indexing, matching contracts, durable operation claiming, immutable JSON
+export listing/download helpers, discovery's bounded source traversal, application
+state/approval/submission-uncertainty transitions, intervention/ticket transitions,
+and schedule definitions/cursors with one-catch-up semantics.
 
-## Scaffold verification
+The worker now runs the persisted schedule ticker, applies validated browser
+egress checks, and uses the separate Unsloth inference service for bounded
+structured diagnostics and discovery assistance. Form preparation and external
+submission remain explicitly review-controlled: preparation stops at
+`needs_review`, and ambiguous submission ends at `submission_unknown` pending
+user reconciliation. The export metadata/download/retry API is implemented;
+full release acceptance coverage remains outstanding. Do not use this implementation against employer forms
+or present it as release-ready.
+
+## Implemented HTTP routes
+
+Routes are currently exposed under `/api` (the specification's `/api/v1` is the
+target contract namespace). Authenticated groups are:
+
+`/api/auth/login`, `/api/auth/logout`, `/api/health`, `/api/settings`,
+`/api/searches`, `/api/sources`, `/api/schedules`, `/api/runs`,
+`/api/opportunities`, `/api/operations`, `/api/resources`, `/api/profile`,
+`/api/applications`, `/api/interventions`, and `/api/exports`.
+
+Nested routes provide entity reads/updates and the implemented actions for
+resource reindexing, application answers/approval/cancellation/submission
+reconciliation, intervention takeover/view tickets/resolution, schedule updates,
+opportunity dismissal/application linking, fact confirmation/rejection/resolution,
+run controls, artifact downloads, and export artifact downloads. See the route handlers under
+`apps/web/app/api` for the exact method and payload behavior.
+
+## Verification
 
 Verified on 2026-09-08 using Windows with Docker Desktop Linux containers:
 
-- Type checking, all three foundation tests, and Next.js production build passed.
+- `npm run typecheck`, `npm test`, and `npm run build` passed.
 - Both Docker images built with the committed lockfile.
-- All three Compose services reached healthy state; worker completed a non-root,
+- All four Compose services reached healthy state; worker completed a non-root,
   sandbox-enabled headed Chromium launch under Xvfb.
-- Only `127.0.0.1:3000` was published. HTTP checks returned 204 for liveness,
-  200 for the placeholder, 403 for intervention, 404 for internal paths, and 503
-  for unimplemented domain APIs.
+- Only `127.0.0.1:3000` was published. HTTP checks returned 204 for liveness and
+  authenticated dashboard/API checks exercised the implemented route groups.
 
 The gateway has a separate edge network because an internal-only Docker network
 does not provide host port publication on the tested Docker version. Application
 communication still uses internal frontend/backend networks. Numeric UID 1000 is
 explicit throughout; the upstream image's `pwuser` name currently resolves to 1001.
-These checks establish scaffold startup only, not feature acceptance or Unsloth/Qwen
-inference readiness.
+These checks establish local startup and the tested implementation slices only;
+they do not establish complete feature acceptance or successful Qwen3.5-9B model
+readiness on every GPU/runtime.

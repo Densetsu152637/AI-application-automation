@@ -167,5 +167,6 @@ image, readiness MUST report schema/browser incompatibility. A published VNC or
 DevTools port is an invalid deployment even if the dashboard login works.
 
 The operator documentation MUST include these failures, fresh setup, model
-replacement diagnostics, backup/restore, and safe shutdown. There is no real
-deployment command to run until the future application and Compose files exist.
+replacement diagnostics, backup/restore, and safe shutdown. The current local
+deployment command is documented in [development.md](../development.md); full
+backup/restore and release diagnostics remain acceptance work.

@@ -1,6 +1,6 @@
 {
   "name": "@aaa/adapters", "version": "0.0.0", "private": true, "type": "module",
-  "exports": {"./database": "./src/database.ts", "./config": "./src/config.ts"},
+  "exports": {"./applications": "./src/applications.ts", "./database": "./src/database.ts", "./config": "./src/config.ts", "./security": "./src/security.ts", "./repositories": "./src/repositories.ts", "./resources": "./src/resources.ts", "./llm": "./src/llm.ts", "./artifacts": "./src/artifacts.ts", "./backup": "./src/backup.ts", "./retention": "./src/retention.ts", "./scheduler": "./src/scheduler.ts", "./policies": "./src/policies.ts"},
   "dependencies": {"@aaa/contracts": "0.0.0", "@aaa/domain": "0.0.0", "better-sqlite3": "13.0.3", "zod": "4.5.4"},
   "devDependencies": {"@types/better-sqlite3": "9.6.0"}
 }

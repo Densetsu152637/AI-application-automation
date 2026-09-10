@@ -1,11 +1,13 @@
 # Specification index
 
-Version: 1.0. Status: ready for implementation planning. Updated: 2026-09-08.
+Version: 1.0. Status: implementation in progress. Updated: 2026-09-10.
 
-This package specifies the application; it does not implement it. Examples are
-illustrative contracts. The repository now includes a development scaffold;
-see the [development guide](../development.md) for implemented foundations and
-remaining release gates. Acceptance scenarios below are not claims of completion.
+This package is the authoritative application contract. The repository also
+contains a partial implementation of the dashboard, durable operations,
+discovery/export, application, intervention, and schedule slices; see the
+[development guide](../development.md) for the current route map, commands, and
+remaining release gates. Examples are illustrative contracts, and acceptance
+scenarios below are not claims that every requirement has passed.
 
 ## Reading order
 

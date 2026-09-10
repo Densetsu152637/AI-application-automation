@@ -35,7 +35,7 @@ to every record/message in the cited sections, not only the illustrative JSON.
 
 | Scenario | Given / when | Required observable result | Requirements |
 |---|---|---|---|
-| AT-001 | Inspect release scope and first-run UI | Documentation-only repository is not described as running software; future UI exposes one applicant and agreed scope, without cloud/OCR/vision promises | PROD-001, PROD-010, QA-006 |
+| AT-001 | Inspect release scope and first-run UI | Current implementation and remaining release work are distinguished; UI exposes one applicant and agreed scope, without cloud/OCR/vision promises | PROD-001, PROD-010, QA-006 |
 | AT-002 | Discover a part-time internship with required matching filters | Separate category/arrangement pass, terminology distinguishes listing/opportunity/assessment/application | PROD-002, PROD-003, DATA-002 |
 | AT-003 | First scan has matches, rejects, seen matches, and review cases | Matching precedes novelty eligibility; counts and exports preserve distinctions | PROD-004, PROD-008 |
 | AT-004 | Start with default settings, then enable automatic policy | Defaults match specification; saved valid authority permits eligible submissions, schedule alone does not | PROD-005, PROD-009 |
@@ -129,7 +129,7 @@ website or semantic correctness; record the tested scope.
 The implementation handoff MUST include a repeatable demonstration using fictional
 resources and a controlled fixture site:
 
-1. Start the future Compose deployment and confirm only localhost gateway exposure.
+1. Start the local Compose deployment and confirm only localhost gateway exposure.
 2. Log in, confirm timezone, start the Unsloth inference service with the targeted
    Qwen3.5 9B / 32 Ki configuration, and pass model diagnostics.
 3. Reindex resources, inspect provenance, confirm facts, and choose a resume.
@@ -163,8 +163,9 @@ implementation appear complete.
 
 ## QA-006 — Implementation order and completion gates
 
-Future implementation MUST proceed through these gates, preserving a usable
-increment at each stage. No gate authorizes real employer submissions in tests.
+Remaining implementation and release hardening MUST proceed through these gates,
+preserving a usable increment at each stage. No gate authorizes real employer
+submissions in tests.
 
 | Gate | Deliverable | Exit evidence |
 |---|---|---|
@@ -178,4 +179,5 @@ increment at each stage. No gate authorizes real employer submissions in tests.
 Application implementation is complete only when all mandatory scenarios pass,
 the manual exercise is recorded, and no mandatory behavior remains a stub. This
 documentation task is complete when all ten chapters exist and its documentation
-checks pass; it does not require building the future application.
+checks pass; it does not require that every release-gate behavior already be
+complete.

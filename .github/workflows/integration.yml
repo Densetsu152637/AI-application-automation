@@ -1,0 +1,82 @@
+name: Integration contracts
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.0'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Validate Compose configuration
+        run: docker compose config --quiet
+      - name: Validate dynamic Unsloth model lifecycle
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+          source = Path('services/inference/server.py').read_text(encoding='utf-8')
+          ast.parse(source)
+          required = [
+              'asyncio.to_thread(load_model)',
+              'asyncio.to_thread(unload_model)',
+              'MODEL_IDLE_SECONDS',
+              'MODEL_LOAD_TIMEOUT_SECONDS',
+              'MODEL_UNLOAD_TIMEOUT_SECONDS',
+              '@app.post("/admin/model/load")',
+              '@app.post("/admin/model/unload")',
+              'torch.cuda.empty_cache()',
+          ]
+          missing = [item for item in required if item not in source]
+          if missing:
+              raise SystemExit('Inference lifecycle contract missing: ' + ', '.join(missing))
+          compose = Path('compose.yml').read_text(encoding='utf-8')
+          for item in ['MODEL_ID: Qwen3.5-9B', "MAX_MODEL_LEN: '32768'", 'MODEL_IDLE_SECONDS']:
+              if item not in compose:
+                  raise SystemExit('Compose inference lifecycle contract missing: ' + item)
+          print('Dynamic Unsloth lifecycle contract is consistent.')
+          PY
+      - name: Check architecture and documentation consistency
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+
+          const compose = readFileSync('compose.yml', 'utf8');
+          const architecture = readFileSync('docs/specification/02-architecture.md', 'utf8');
+          const deployment = readFileSync('docs/specification/03-deployment-and-configuration.md', 'utf8');
+
+          for (const service of ['gateway:', 'web:', 'worker:', 'inference:']) {
+            if (!compose.includes(`  ${service}`)) throw new Error(`Compose is missing ${service}`);
+          }
+          for (const term of ['Unsloth', 'Qwen3.5 9B', '32 Ki active-token']) {
+            if (!architecture.includes(term)) throw new Error(`Architecture docs are missing ${term}`);
+          }
+          const deploymentLower = deployment.toLowerCase();
+          for (const term of ['separate compose service', 'openai-compatible', 'must not be published']) {
+            if (!deploymentLower.includes(term)) throw new Error(`Deployment docs are missing ${term}`);
+          }
+          if (/^\s*ports:/m.test(compose.slice(compose.indexOf('  inference:')))) {
+            throw new Error('Inference service must not publish host ports');
+          }
+          const inference = compose.slice(compose.indexOf('  inference:'));
+          for (const term of ['MODEL_ID: Qwen3.5-9B', "MAX_MODEL_LEN: '32768'", 'gpus: all', 'expose:']) {
+            if (!inference.includes(term)) throw new Error(`Inference service is missing ${term}`);
+          }
+          console.log('Architecture, deployment, Compose, and inference-boundary contracts are consistent.');
+          NODE

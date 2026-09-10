@@ -4,6 +4,14 @@
 
 ## API-001 — Transport, authentication, and envelopes
 
+The current implementation exposes these handlers under `/api`, including
+`/api/searches`, `/api/sources`, `/api/schedules`, `/api/runs`,
+`/api/opportunities`, `/api/operations`, `/api/resources`, `/api/profile`,
+`/api/applications`, `/api/interventions`, `/api/exports`, `/api/settings`, and
+`/api/health`; nested entity/action routes are listed below. The `/api/v1`
+prefix in this contract is the intended versioned namespace for the completed
+API, so clients should treat the current unversioned prefix as provisional.
+
 All domain endpoints MUST live under /api/v1, use JSON UTF-8, require the
 DEP-006 session, and return Cache-Control: private, no-store. Successful JSON
 responses have {schemaVersion:1,data:T,requestId:UUID}; list data is
@@ -263,4 +271,6 @@ The API MUST reject: automatic policy with an empty destination allowlist; missi
 If-Match on profile edits; reused command key with a different search body; approval
 for an old prepared revision; artifact download with a relative filesystem path;
 anonymous viewer upgrade; state mutation via GET. Examples are not executable
-server code and do not imply endpoints currently exist.
+server code. The route handlers named in the implementation note above currently
+exist, but their response envelopes and coverage are not yet fully conformant to
+every normative requirement in this chapter.

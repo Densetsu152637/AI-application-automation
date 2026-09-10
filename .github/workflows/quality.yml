@@ -1,0 +1,29 @@
+name: Quality and architecture checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.0'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - name: Validate Compose and inference service boundary
+        run: docker compose config --quiet
+      - name: Ensure no legacy LM configuration remains
+        shell: bash
+        run: |
+          forbidden='L''M_(BASE_URL|MODEL_ID|API_KEY_FILE|CONTEXT_TOKENS|OUTPUT_TOKENS)|L''M Studio'
+          if grep -RInE "$forbidden" --exclude-dir=.git --exclude-dir=node_modules --exclude=.env --exclude=quality.yml .; then
+            exit 1
+          fi

@@ -7,9 +7,9 @@ and submits applications from confirmed applicant resources.
 **Status: development scaffold. Feature implementation and release gates remain open.**
 
 The repository now contains an npm TypeScript workspace, Next.js App Router,
-an idle worker, shared Zod contracts, SQLite migration infrastructure, and Docker
+a durable worker, shared Zod contracts, SQLite migration infrastructure, and Docker
 Compose with a localhost nginx gateway. See the [development guide](docs/development.md)
-for setup, commands, pinned versions, and deliberately disabled features.
+for setup, commands, pinned versions, and deliberately bounded features.
 
 ```sh
 npm ci

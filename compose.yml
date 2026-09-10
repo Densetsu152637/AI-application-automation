@@ -4,11 +4,11 @@ x-environment: &environment
   APP_ORIGIN: ${APP_ORIGIN:-http://localhost:3000}
   ADMIN_SECRET_FILE: /run/secrets/admin
   INTERNAL_SECRET_FILE: /run/secrets/internal
-  LM_BASE_URL: ${LM_BASE_URL:-http://host.docker.internal:1234/v1}
-  LM_MODEL_ID: ${LM_MODEL_ID:-}
-  LM_TIMEOUT_SECONDS: ${LM_TIMEOUT_SECONDS:-120}
-  LM_CONTEXT_TOKENS: ${LM_CONTEXT_TOKENS:-8192}
-  LM_OUTPUT_TOKENS: ${LM_OUTPUT_TOKENS:-2048}
+  LLM_BASE_URL: ${LLM_BASE_URL:-http://inference:8000/v1}
+  LLM_MODEL_ID: ${LLM_MODEL_ID:-Qwen3.5-9B}
+  LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-120}
+  LLM_CONTEXT_TOKENS: ${LLM_CONTEXT_TOKENS:-32768}
+  LLM_OUTPUT_TOKENS: ${LLM_OUTPUT_TOKENS:-2048}
   APP_TIMEZONE: ${APP_TIMEZONE:-UTC}
   DB_BUSY_TIMEOUT_MS: 5000
   DIAGNOSTIC_RETENTION_DAYS: ${DIAGNOSTIC_RETENTION_DAYS:-7}
@@ -91,6 +91,28 @@ services:
       start_period: 30s
       retries: 5
 
+  inference:
+    build:
+      context: ./services/inference
+    environment:
+      MODEL_ID: Qwen3.5-9B
+      MAX_MODEL_LEN: '32768'
+      MODEL_IDLE_SECONDS: ${MODEL_IDLE_SECONDS:-300}
+      MODEL_LOAD_TIMEOUT_SECONDS: ${MODEL_LOAD_TIMEOUT_SECONDS:-180}
+      MODEL_UNLOAD_TIMEOUT_SECONDS: ${MODEL_UNLOAD_TIMEOUT_SECONDS:-30}
+      PORT: 8000
+    gpus: all
+    expose: ['8000']
+    volumes:
+      - model-cache:/root/.cache/huggingface
+    networks: [backend]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health').read()"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 5
+
 networks:
   edge: {}
   frontend:
@@ -103,6 +125,7 @@ volumes:
   data:
   browser-profiles:
   diagnostics:
+  model-cache:
 
 secrets:
   admin:

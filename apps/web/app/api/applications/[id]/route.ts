@@ -1,0 +1,5 @@
+import { requireSession } from '../../../../lib/auth.ts';
+import { appDb } from '../../../../lib/server.ts';
+import { apiError, apiOk, requestId } from '../../../../lib/api.ts';
+function shape(row: Record<string, unknown>) { return { id: row.id, revision: row.revision, listingId: row.listing_id, state: row.state, answers: JSON.parse(String(row.answers_json)), attachments: JSON.parse(String(row.attachments_json)), blockers: JSON.parse(String(row.blockers_json)), createdAt: row.created_at, updatedAt: row.updated_at }; }
+export async function GET(request: Request, context: { params: Promise<{ id: string }> }) { const rid = requestId(request); if (!(await requireSession())) return apiError('UNAUTHENTICATED', 401, rid); const { id } = await context.params; const db = appDb(); try { const row = db.prepare('SELECT * FROM application_attempts WHERE id=?').get(id) as Record<string, unknown> | undefined; return row ? apiOk(shape(row), 200, rid) : apiError('NOT_FOUND', 404, rid, { entityId: id }); } finally { db.close(); } }
