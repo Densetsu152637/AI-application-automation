@@ -197,6 +197,26 @@ test('resource indexing preserves extracted evidence and records unsupported, ig
   }
 });
 
+test('resource indexing extracts text-based PDFs and reports image-only PDFs', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'workflow-pdf-resources-'));
+  const dbPath = join(dir, 'workflow.sqlite');
+  const root = join(dir, 'resources');
+  mkdirSync(root);
+  try {
+    writeFileSync(join(root, 'profile.pdf'), '%PDF-1.4\nstream\nBT (Alex Example) Tj ET\nendstream\n%%EOF');
+    writeFileSync(join(root, 'scan.pdf'), '%PDF-1.4\n%%EOF');
+    const db = openDatabase(dbPath); migrate(db);
+    try {
+      const result = indexResourceRoot(db, root);
+      assert.equal(result.indexed, 1);
+      assert.equal(result.failed, 1);
+      const extracted = db.prepare("SELECT extraction_state,media_type,extracted_text FROM resource_documents WHERE relative_path='profile.pdf'").get() as { extraction_state: string; media_type: string; extracted_text: string };
+      assert.deepEqual(extracted, { extraction_state: 'extracted', media_type: 'application/pdf', extracted_text: 'Alex Example' });
+      assert.equal((db.prepare("SELECT error_code FROM resource_documents WHERE relative_path='scan.pdf'").get() as { error_code: string }).error_code, 'RESOURCE_OCR_UNSUPPORTED');
+    } finally { db.close(); }
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
 test('artifacts are immutable, hash-verifiable, and suitable for export snapshots', () => {
   const root = mkdtempSync(join(tmpdir(), 'workflow-artifacts-'));
   try {

@@ -26,7 +26,8 @@ flowchart LR
 Gateway, web, worker, and inference service MUST be separate Compose services.
 The inference service MUST run Unsloth with the pinned Qwen3.5 9B target and a
 32 Ki active-token attention budget. It MUST expose only an internal
-OpenAI-compatible HTTP interface. The worker service
+OpenAI-compatible HTTP interface on a dedicated network shared only with the
+worker. The worker service
 owns the browser-view bridge, virtual display, and browser egress proxy. These
 are internal processes, not additional published services. SQLite is a file on
 a shared local volume, not a network database service.
@@ -107,8 +108,9 @@ snapshot explains previous decisions; it does not preserve revoked authority.
 ## ARCH-008 — Local data boundaries
 
 Only the worker's model adapter may send prompts to the internal Unsloth inference
-service. Job-site browser requests MUST not reach the inference service or other
-local infrastructure. Only application-required answers and approved attachments may
+service. The web service MUST obtain model status through an authenticated worker
+health endpoint and MUST not connect to inference directly. Job-site browser
+requests MUST not reach the inference service or other local infrastructure. Only application-required answers and approved attachments may
 leave through job-site forms. Model requests MUST not contain browser cookies,
 administrator secrets, or unrelated complete resource libraries. No third-party
 analytics or remote error-reporting service is part of v1.

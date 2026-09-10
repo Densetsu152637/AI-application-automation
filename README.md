@@ -8,7 +8,7 @@ and submits applications from confirmed applicant resources.
 
 The repository now contains an npm TypeScript workspace, Next.js App Router,
 a durable worker, shared Zod contracts, SQLite migration infrastructure, and Docker
-Compose with a localhost nginx gateway. See the [development guide](docs/development.md)
+Compose with a localhost-only gateway. See the [development guide](docs/development.md)
 for setup, commands, pinned versions, and deliberately bounded features.
 
 ```sh
@@ -26,8 +26,17 @@ model contracts, recovery, dashboard APIs, and acceptance scenarios.
 
 The intended deployment uses Docker Compose, Next.js, a separate TypeScript
 worker, Chromium/Playwright, SQLite, and a separate internal Unsloth inference
-service targeting Qwen3.5 9B with 32 Ki active attention tokens. The inference
-service is the sole model-serving boundary; it is not exposed through the public
-gateway.
+service targeting Qwen3.5 9B with 32 Ki active attention tokens. The web/API,
+browser worker, and GPU model runtime remain separate because they have different
+security and failure boundaries. SQLite and the artifact volumes are deliberately
+local and single-host; this is a modular monolith with isolated runtimes, not a
+horizontally scalable service fleet. The inference service is the sole
+model-serving boundary and is not exposed through the public gateway. Model
+weights must be provisioned into the local model cache before use; the runtime
+does not download or silently substitute weights. The inference container is
+reachable only from the worker’s dedicated internal network; dashboard health
+is relayed through an authenticated worker endpoint. The dashboard can upload
+PDF applicant resources, queue bounded extraction, and ask grounded questions
+about the user using confirmed facts and extracted document segments.
 Implementation agents should follow the dependency order and release gates in
 [chapter 10](docs/specification/10-acceptance-and-handoff.md).

@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { atomicWriteArtifact, serializeImmutableJson } from '../packages/adapters/src/artifacts.ts';
-import { exportContentDisposition, listExportMetadata, readExportArtifact, validateExportKey } from '../apps/web/lib/exports.ts';
+import { exportContentDisposition, listExportMetadata, readExportArtifact, validateExportKey } from '../apps/web-app/lib/exports.ts';
 
 test('export keys are confined to the export filename grammar', async () => {
   assert.equal(validateExportKey('exports/run-1/base.json'), 'exports/run-1/base.json');

@@ -43,6 +43,8 @@ export const profilePatchSchema = z.strictObject({ narrativeInstructions: z.stri
 export const applicationAnswerSchema = z.strictObject({ fieldKey: z.string().trim().min(1).max(200), value: z.union([z.string().max(10000), z.boolean(), z.array(z.string().max(1000)), z.null()]), sourceFactRefs: z.array(referenceSchema).max(20) });
 export const applicationCreateSchema = z.strictObject({ listingId: uuidSchema });
 export const applicationAnswersPatchSchema = z.strictObject({ answers: z.array(applicationAnswerSchema).max(500) });
+export const profileQuestionSchema = z.strictObject({ question: z.string().trim().min(1).max(2000) });
+export type ProfileQuestionInput = z.infer<typeof profileQuestionSchema>;
 
 export const apiSchemaVersion = 1 as const;
 export const requestIdSchema = z.uuid();

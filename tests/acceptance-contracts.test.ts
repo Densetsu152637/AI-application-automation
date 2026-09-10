@@ -37,6 +37,8 @@ const requiredRoutes = [
   'operations/[id]/route.ts',
   'profile/route.ts',
   'profile/facts/route.ts',
+  'profile/questions/route.ts',
+  'profile/questions/[id]/route.ts',
   'profile/facts/[id]/route.ts',
   'facts/[id]/confirm/route.ts',
   'facts/[id]/reject/route.ts',
@@ -64,13 +66,13 @@ const requiredRoutes = [
 ];
 
 test('required API route handlers are present', () => {
-  const apiRoot = join(repositoryRoot, 'apps', 'web', 'app', 'api');
+  const apiRoot = join(repositoryRoot, 'apps', 'web-app', 'app', 'api');
   const missing = requiredRoutes.filter(route => !statExists(join(apiRoot, route)));
   assert.deepEqual(missing, [], `missing route handlers: ${missing.join(', ')}`);
 });
 
 test('opportunity API slice uses the authenticated envelope and mutation safeguards', () => {
-  const apiRoot = join(repositoryRoot, 'apps', 'web', 'app', 'api');
+  const apiRoot = join(repositoryRoot, 'apps', 'web-app', 'app', 'api');
   const list = readFileSync(join(apiRoot, 'opportunities', 'route.ts'), 'utf8');
   const detail = readFileSync(join(apiRoot, 'opportunities', '[id]', 'route.ts'), 'utf8');
   const applications = readFileSync(join(apiRoot, 'opportunities', '[id]', 'applications', 'route.ts'), 'utf8');
@@ -88,7 +90,7 @@ test('opportunity API slice uses the authenticated envelope and mutation safegua
 });
 
 test('export lifecycle routes enforce authentication, envelopes, and retry safeguards', () => {
-  const root = join(repositoryRoot, 'apps', 'web', 'app', 'api', 'exports', '[id]');
+  const root = join(repositoryRoot, 'apps', 'web-app', 'app', 'api', 'exports', '[id]');
   const detail = readFileSync(join(root, 'route.ts'), 'utf8');
   const download = readFileSync(join(root, 'download', 'route.ts'), 'utf8');
   const retry = readFileSync(join(root, 'retry', 'route.ts'), 'utf8');
@@ -104,7 +106,7 @@ test('export lifecycle routes enforce authentication, envelopes, and retry safeg
 });
 
 test('resources and profile route families use the shared private transport contract', () => {
-  const root = join(repositoryRoot, 'apps', 'web', 'app', 'api');
+  const root = join(repositoryRoot, 'apps', 'web-app', 'app', 'api');
   const files = [
     join(root, 'resources', 'route.ts'), join(root, 'resources', 'reindex', 'route.ts'),
     join(root, 'resources', '[id]', 'route.ts'), join(root, 'profile', 'route.ts'),
@@ -123,7 +125,7 @@ test('resources and profile route families use the shared private transport cont
 });
 
 test('application action routes enforce the shared mutation transport contract', () => {
-  const root = join(repositoryRoot, 'apps', 'web', 'app', 'api', 'applications', '[id]');
+  const root = join(repositoryRoot, 'apps', 'web-app', 'app', 'api', 'applications', '[id]');
   const files = ['answers/route.ts', 'approve/route.ts', 'cancel/route.ts', 'retry/route.ts', 'resolve-submission/route.ts', 'submit/route.ts']
     .map(path => readFileSync(join(root, path), 'utf8'));
   for (const source of files) {
@@ -137,7 +139,7 @@ test('application action routes enforce the shared mutation transport contract',
 });
 
 test('fact review mutations require persisted idempotency', () => {
-  const root = join(repositoryRoot, 'apps', 'web', 'app', 'api', 'facts', '[id]');
+  const root = join(repositoryRoot, 'apps', 'web-app', 'app', 'api', 'facts', '[id]');
   for (const action of ['confirm', 'reject', 'resolve']) {
     const source = readFileSync(join(root, action, 'route.ts'), 'utf8');
     assert.match(source, /idempotencyKey/);
@@ -148,17 +150,17 @@ test('fact review mutations require persisted idempotency', () => {
 });
 
 test('source support-status mutation requires persisted idempotency', () => {
-  const source = readFileSync(join(repositoryRoot, 'apps', 'web', 'app', 'api', 'sources', '[id]', 'support-status', 'route.ts'), 'utf8');
+  const source = readFileSync(join(repositoryRoot, 'apps', 'web-app', 'app', 'api', 'sources', '[id]', 'support-status', 'route.ts'), 'utf8');
   assert.match(source, /idempotencyKey/); assert.match(source, /findIdempotency/); assert.match(source, /saveIdempotency/);
 });
 
 test('source update mutation requires persisted idempotency', () => {
-  const source = readFileSync(join(repositoryRoot, 'apps', 'web', 'app', 'api', 'sources', '[id]', 'route.ts'), 'utf8');
+  const source = readFileSync(join(repositoryRoot, 'apps', 'web-app', 'app', 'api', 'sources', '[id]', 'route.ts'), 'utf8');
   assert.match(source, /idempotencyKey/); assert.match(source, /findIdempotency/); assert.match(source, /saveIdempotency/);
 });
 
 test('policy and settings control routes use the shared transport contract', () => {
-  const root = join(repositoryRoot, 'apps', 'web', 'app', 'api');
+  const root = join(repositoryRoot, 'apps', 'web-app', 'app', 'api');
   const files = [
     readFileSync(join(root, 'policies', 'route.ts'), 'utf8'),
     readFileSync(join(root, 'policies', '[id]', 'route.ts'), 'utf8'),
@@ -177,15 +179,35 @@ test('policy and settings control routes use the shared transport contract', () 
 });
 
 test('the versioned API namespace is routed to the implemented handler surface', () => {
-  const config = readFileSync(join(repositoryRoot, 'apps', 'web', 'next.config.ts'), 'utf8');
+  const config = readFileSync(join(repositoryRoot, 'apps', 'web-app', 'next.config.ts'), 'utf8');
   assert.match(config, /source:\s*['"]\/api\/v1\/:path\*['"]/);
   assert.match(config, /destination:\s*['"]\/api\/:path\*['"]/);
 });
 
 test('operation creation requires persisted idempotency replay protection', () => {
-  const source = readFileSync(join(repositoryRoot, 'apps', 'web', 'app', 'api', 'operations', 'route.ts'), 'utf8');
+  const source = readFileSync(join(repositoryRoot, 'apps', 'web-app', 'app', 'api', 'operations', 'route.ts'), 'utf8');
   assert.match(source, /idempotencyKey/); assert.match(source, /findIdempotency/);
   assert.match(source, /saveIdempotency/); assert.match(source, /IDEMPOTENCY_CONFLICT/);
+});
+
+test('dashboard polls operation state reactively without reloading the page', () => {
+  const source = readFileSync(join(repositoryRoot, 'apps', 'web-app', 'app', 'dashboard', 'view.tsx'), 'utf8');
+  assert.match(source, /refreshOperations/);
+  assert.match(source, /document\.visibilityState !== 'visible'/);
+  assert.match(source, /window\.setInterval\(poll, operationPollFailures >= 3 \? 10_000 : 2_000\)/);
+  assert.match(source, /Active operations/);
+  assert.match(source, /aria-live="polite"/);
+  assert.match(source, /stale.*last updated/);
+});
+
+test('worker health is the authenticated model-status boundary', () => {
+  const worker = readFileSync(join(repositoryRoot, 'services', 'worker', 'src', 'main.ts'), 'utf8');
+  const health = readFileSync(join(repositoryRoot, 'apps', 'web-app', 'app', 'api', 'health', 'route.ts'), 'utf8');
+  assert.match(worker, /\/internal\/health/);
+  assert.match(worker, /timingSafeEqual/);
+  assert.match(worker, /LLM_BASE_URL.*\/models/);
+  assert.match(health, /worker:3001\/internal\/health/);
+  assert.match(health, /INTERNAL_SECRET_FILE/);
 });
 
 test('migrations are contiguous and ledger versions match filenames', () => {

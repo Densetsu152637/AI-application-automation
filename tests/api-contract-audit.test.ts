@@ -3,7 +3,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import test from 'node:test';
 
-const apiRoot = join(process.cwd(), 'apps', 'web', 'app', 'api');
+const apiRoot = join(process.cwd(), 'apps', 'web-app', 'app', 'api');
 function routeFiles(directory = apiRoot): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
     const path = join(directory, entry.name);

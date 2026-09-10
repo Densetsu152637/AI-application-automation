@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": ["apps/*", "services/*", "packages/*"],
   "engines": {"node": ">=22.14.0 <25"},
   "packageManager": "npm@10.9.2",
   "scripts": {
@@ -12,7 +12,7 @@
     "build": "npm run build --workspace @aaa/web",
     "typecheck": "tsc --noEmit && npm run typecheck --workspace @aaa/web",
     "test": "tsx --test tests/*.test.ts",
-    "worker": "tsx apps/worker/src/main.ts"
+    "worker": "tsx services/worker/src/main.ts"
   },
   "devDependencies": {"@types/node": "22.20.1", "typescript": "5.9.3", "tsx": "4.23.13"}
 }

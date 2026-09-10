@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3';
 import { readFileSync } from 'node:fs';
-export const schemaVersion = 16;
+export const schemaVersion = 17;
 export function openDatabase(path: string) {
   const db = new Database(path);
   db.pragma('busy_timeout = 5000');
@@ -76,6 +76,10 @@ export function migrate(db: Database.Database) {
     if (current < 16) {
       db.exec(readFileSync(new URL('../migrations/016-opportunity-state.sql', import.meta.url), 'utf8'));
       db.pragma('user_version = 16');
+    }
+    if (current < 17) {
+      db.exec(readFileSync(new URL('../migrations/017-profile-questions.sql', import.meta.url), 'utf8'));
+      db.pragma('user_version = 17');
     }
   }).immediate();
 }

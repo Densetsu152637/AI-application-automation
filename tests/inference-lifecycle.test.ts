@@ -16,6 +16,10 @@ test('Unsloth inference loads lazily and unloads idle model memory', () => {
   assert.match(source, /@app\.post\("\/admin\/model\/unload"\)/);
   assert.match(source, /load_on_demand/);
   assert.match(source, /active_requests/);
+  assert.match(source, /generation_lock/);
+  assert.match(source, /local_files_only=True/);
+  assert.match(source, /INFERENCE_AUTH_SECRET_FILE/);
+  assert.match(source, /MODEL_SCHEMA_MISMATCH/);
   assert.match(source, /MODEL_IN_USE/);
   assert.match(source, /# Loading is deliberately lazy/);
   assert.match(source, /active_requests == 0 and last_used_at > 0/);
@@ -31,4 +35,19 @@ test('inference lifecycle timeouts are bounded in Compose', () => {
   assert.match(source, /INFERENCE_IDLE_TIMEOUT_INVALID/);
   assert.match(source, /INFERENCE_LOAD_TIMEOUT_INVALID/);
   assert.match(source, /INFERENCE_UNLOAD_TIMEOUT_INVALID/);
+});
+
+test('inference is isolated to the worker network and model requests are bounded', () => {
+  const compose = readFileSync(join(process.cwd(), 'compose.yml'), 'utf8');
+  const health = readFileSync(join(process.cwd(), 'apps', 'web-app', 'app', 'api', 'health', 'route.ts'), 'utf8');
+  assert.match(compose, /networks: \[backend, inference, egress\]/);
+  assert.match(compose, /networks: \[inference\]/);
+  assert.match(compose, /networks: \[frontend, backend\]/);
+  assert.match(compose, /count: 1/);
+  assert.match(compose, /INFERENCE_MEMORY_LIMIT/);
+  assert.match(source, /@app\.get\("\/ready"\)/);
+  assert.match(source, /MODEL_LOAD_FAILED/);
+  assert.match(source, /message exceeds 32768 bytes/);
+  assert.match(health, /internal\/health/);
+  assert.match(health, /authorization/);
 });

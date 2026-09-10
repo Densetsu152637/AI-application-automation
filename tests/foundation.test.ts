@@ -14,8 +14,8 @@ test('migration is repeatable and refuses incompatible schema', () => {
     assert.throws(() => assertSchema(db), /SCHEMA_INCOMPATIBLE/);
     migrate(db); migrate(db); assertSchema(db);
     assert.equal(db.pragma('journal_mode', { simple: true }), 'wal');
-    assert.deepEqual(db.prepare('SELECT count(*) AS count FROM schema_migrations').get(), { count: 16 });
-    db.pragma('user_version = 17');
+    assert.deepEqual(db.prepare('SELECT count(*) AS count FROM schema_migrations').get(), { count: 17 });
+    db.pragma('user_version = 18');
     assert.throws(() => migrate(db), /SCHEMA_INCOMPATIBLE/);
   } finally { db.close(); rmSync(dir, { recursive: true }); }
 });

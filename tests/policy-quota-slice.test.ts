@@ -11,7 +11,7 @@ test('migration persists policies and quota reservations', () => {
   const dir = mkdtempSync(join(tmpdir(), 'aaa-policy-')); const db = openDatabase(join(dir, 'app.sqlite'));
   try {
     migrate(db);
-    assert.equal(db.pragma('user_version', { simple: true }), 16);
+    assert.equal(db.pragma('user_version', { simple: true }), 17);
     const parsed = policySchema.parse({ name: 'Default', timezone: 'Australia/Sydney' });
     const created = createPolicy(db, parsed, '2026-01-01T00:00:00.000Z');
     assert.equal(created.maxSubmissionsPerDay, 5);

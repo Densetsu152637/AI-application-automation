@@ -5,8 +5,9 @@
 ## DEP-001 — Compose services and publication
 
 Compose MUST run an nginx gateway, Next.js web service, TypeScript worker, and
-separate Unsloth inference service. The inference service is attached only to
-the internal backend network and MUST have no host port mapping.
+separate Unsloth inference service. The inference service is attached only to a
+dedicated internal network shared with the worker and MUST have no host port
+mapping. The web service MUST not be attached to that inference network.
 Only gateway port 3000 is published, bound to 127.0.0.1. The gateway routes normal
 traffic to web and protected intervention traffic to the worker bridge. Worker
 control, VNC, DevTools, and proxy ports MUST not have host mappings. Do not mount
@@ -55,7 +56,9 @@ The web service may call worker GET /internal/artifacts/{id} only after user
 authorization, using the separate internal bearer secret. The worker validates
 the secret and artifact ID and returns verified bytes or the common redacted
 error. No generic file-read or arbitrary proxy endpoint is permitted. The browser
-egress rules prevent job pages from reaching this internal service.
+egress rules prevent job pages from reaching this internal service. The same
+authenticated worker boundary supplies model health to the web service; the web
+service does not query inference directly.
 
 ## DEP-004 — Configuration schema
 
@@ -91,6 +94,10 @@ load the targeted Qwen3.5 9B model and expose an internal OpenAI-compatible
 DNS name (`inference`) and MUST not be published to the host or public network.
 GPU allocation, model weights, and the Unsloth runtime belong to this service,
 not to the web or browser worker images.
+Model and administration requests MUST carry the internal bearer credential;
+health liveness may remain unauthenticated for container probing. Model weights
+are local-only and MUST be provisioned before startup; the service MUST not
+download or silently substitute them.
 
 Connectivity diagnostics MUST separately report DNS/TCP failure, authentication
 failure, missing/incompatible model, insufficient 32 Ki capacity, timeout, and

@@ -100,7 +100,7 @@ test('automatic submission intent guards policy and reserves quota before dispat
 });
 
 test('application creation requires and replays idempotency keys', () => {
-  const route = readFileSync(join(process.cwd(), 'apps/web/app/api/applications/route.ts'), 'utf8');
+  const route = readFileSync(join(process.cwd(), 'apps/web-app/app/api/applications/route.ts'), 'utf8');
   assert.match(route, /idempotencyKey\(request\)/);
   assert.match(route, /IDEMPOTENCY_KEY_REQUIRED/);
   assert.match(route, /findIdempotency\(db, scope, key, hash\)/);

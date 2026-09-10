@@ -1,5 +1,5 @@
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
-torch>=2.4.0
-transformers>=4.51.0
-unsloth
+torch==2.4.1
+transformers==4.51.3
+unsloth==2025.5.7

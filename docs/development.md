@@ -27,6 +27,11 @@ Visit http://localhost:3000 for the authenticated dashboard. `/health/live`
 returns an empty 204 response and is only a liveness check. The dashboard and
 its `/api` routes require the administrator session; health and model diagnostics
 still have degraded/unavailable states while services start or are misconfigured.
+The Resources panel accepts PDF uploads up to 20 MiB, stores them under the
+read-only resource mount, and queues extraction. After indexing, “Ask about me”
+queues a bounded local-model question grounded in confirmed facts and extracted
+resource segments; image-only PDFs remain unavailable rather than producing
+invented facts.
 
 ```sh
 docker compose logs web worker
@@ -53,8 +58,8 @@ validated browser egress remain bounded work. SIGTERM closes the worker.
 
 | Path | Responsibility |
 | --- | --- |
-| `apps/web` | Next.js UI and authenticated `/api` route handlers |
-| `apps/worker` | Durable operation claimant, discovery/export worker, and lifecycle checks |
+| `apps/web-app` | Next.js UI and authenticated `/api` route handlers |
+| `services/worker` | Backend durable operation claimant, discovery/export worker, and lifecycle checks |
 | `packages/contracts` | Strict runtime validators and derived JSON schemas |
 | `packages/domain` | Pure typed domain rules and injected ports |
 | `packages/adapters` | Configuration, SQLite, repositories, resources, artifacts, LLM and scheduling adapters |
@@ -73,11 +78,18 @@ The domain package must not import framework, database, filesystem or environmen
 ## Deployment boundaries
 
 Only gateway `127.0.0.1:3000` is published. Web and worker share a local SQLite
-volume; only the worker mounts browser profiles, resources and diagnostics.
+volume. The web service mounts the resources folder only to perform authenticated
+PDF uploads; the worker mounts the same folder read-only for indexing. Only the
+worker mounts browser profiles and diagnostics. The
+gateway remains a deliberately thin boundary for localhost publication and the
+future protected browser-control WebSocket; it is not another application tier.
+It enforces a 20 MiB request limit and bounded proxy timeouts; WebSocket upgrade
+headers are present for the future intervention bridge, which remains fail-closed.
 Resources are read-only; output is writable by worker and read-only by web.
 The worker uses non-root UID 1000, an init process, 1 GiB shared memory and the
-version-matched seccomp profile. A failed Chromium sandbox launch fails startup.
-No sandbox bypass or privileged mode is supplied.
+version-matched seccomp profile. Startup probes Chromium with the sandbox enabled
+and reports browser readiness separately if that probe fails. No sandbox bypass or
+privileged mode is supplied.
 
 Xvfb, x11vnc, websockify and noVNC are installed. Only Xvfb starts. Before enabling
 the bridge, implement DEP-007 tickets/session revocation, exclusive human ownership,
@@ -89,17 +101,38 @@ controls are enabled.
 
 Compose runs Unsloth as the internal `inference` service, targeting Qwen3.5-9B
 with `MAX_MODEL_LEN`/`LLM_CONTEXT_TOKENS=32768` active context tokens. It exposes
-`GET /health`, `GET /v1/models`, and `POST /v1/chat/completions` only on the
-internal backend network. The worker uses the internal
+`GET /health`, `GET /v1/models`, and `POST /v1/chat/completions` only on a
+dedicated internal inference network shared with the worker (the web service is
+not attached to this network). The worker uses the internal
 `LLM_BASE_URL` (default `http://inference:8000/v1`); the inference service has no
-host port or gateway route. The first start may load or download weights into the
-named model cache, and model readiness is separate from dashboard availability.
+host port or gateway route. Requests are authenticated with the internal service
+credential. Provision the exact target weights into the named model cache before
+startup; the runtime uses local files only and reports a degraded model state if
+the cache is missing or incompatible. Model readiness is separate from dashboard
+availability.
 
-For an optional inference token, add a Compose secret backed by an ignored local file,
-mount it only on worker, and set worker `LLM_API_KEY_FILE` to its absolute mounted
-path. Never place the token itself in `.env` or an image. Runtime settings
-versioning, GPU/runtime packaging, model capacity verification and authenticated
-diagnostics remain feature work.
+The worker is the only application service attached to the dedicated inference
+network. The dashboard asks the worker’s authenticated internal health endpoint
+for model status, so the web process never connects directly to the model server.
+Compose reserves one NVIDIA GPU and exposes memory-limit overrides through
+`INFERENCE_MEMORY_LIMIT` and `INFERENCE_MEMORY_RESERVATION`; all four containers
+restart unless stopped.
+
+### Why these services remain separate
+
+Do not merge the Next.js web process with the worker: browser automation has a
+different egress policy, memory profile, and crash domain, and request handlers
+must remain responsive while scans run. Do not merge the worker with inference:
+the worker image owns Chromium and browser profiles, while inference owns CUDA,
+model memory, and model lifecycle. SQLite is intentionally shared on one host;
+adding Redis, a queue, or a network database would add operational cost without
+solving a current scaling requirement. nginx is retained only for publication
+and the future intervention bridge, not as a business-logic service.
+
+Compose derives the worker-to-inference bearer credential from the existing ignored
+internal secret and mounts it read-only into both services. Never place the token
+itself in `.env` or an image. Runtime settings versioning, model capacity
+verification and authenticated diagnostics remain feature work.
 
 ## Version record
 
@@ -117,6 +150,11 @@ Direct npm versions are exact; `package-lock.json` freezes the dependency graph.
 | better-sqlite3 | 13.0.3 |
 | Playwright package / worker image | 1.63.0 / v1.63.0-noble |
 | Chromium | 153.0.8010.12, revision 1243 |
+
+The inference image also pins FastAPI 0.115.6, Uvicorn 0.34.0, Torch 2.4.1,
+Transformers 4.51.3, and Unsloth 2025.5.7 in
+`services/inference/requirements.txt`. Update those versions as one tested CUDA
+runtime change; do not use a floating model-serving dependency in production.
 
 Chromium revision comes from the locked `playwright-core/browsers.json`.
 Update the npm package, lockfile, worker image, seccomp profile and this record together.
@@ -161,7 +199,7 @@ resource reindexing, application answers/approval/cancellation/submission
 reconciliation, intervention takeover/view tickets/resolution, schedule updates,
 opportunity dismissal/application linking, fact confirmation/rejection/resolution,
 run controls, artifact downloads, and export artifact downloads. See the route handlers under
-`apps/web/app/api` for the exact method and payload behavior.
+`apps/web-app/app/api` for the exact method and payload behavior.
 
 ## Verification
 

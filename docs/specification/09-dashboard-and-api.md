@@ -181,6 +181,12 @@ POST /settings/model-test with {} returns 202. GET /health returns component
 states for database, worker heartbeat, output storage, browser, and model, each
 as {state:ready/degraded/unavailable,checkedAt:Instant,message:Text or null}.
 GET /operations/{id} returns durable progress/result or a redacted failure.
+POST /resources accepts an authenticated multipart PDF upload up to the resource
+limit, writes it atomically under the configured resource root, and returns a
+queued reindex operation. POST /profile/questions accepts a bounded question and
+returns a queued operation; GET /profile/questions/{id} returns its answer and
+resource evidence once complete. Questions use confirmed facts plus bounded,
+hash-verified extracted resource segments only.
 Only /health/live is anonymous and contains no configuration or versions.
 
 ## API-009 — Error-code catalogue
