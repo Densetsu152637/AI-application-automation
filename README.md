@@ -1,42 +1,74 @@
 # AI application automation
 
-A locally hosted TypeScript application foundation for software that discovers jobs,
-matches them using a dedicated Unsloth inference service, exports new opportunities, and optionally prepares
-and submits applications from confirmed applicant resources.
-
-**Status: development scaffold. Feature implementation and release gates remain open.**
-
-The repository now contains an npm TypeScript workspace, Next.js App Router,
-a durable worker, shared Zod contracts, SQLite migration infrastructure, and Docker
-Compose with a localhost-only gateway. See the [development guide](docs/development.md)
-for setup, commands, pinned versions, and deliberately bounded features.
+A local Next.js application for job discovery, applicant resources, and reviewed
+application workflows. Next.js owns the API, scheduler, operation queue and
+Playwright browsers in one long-running Node.js process. The GPU inference service
+remains separate and loads its model on demand.
 
 ```sh
 npm ci
 npm run setup
-docker compose up --build -d --wait
+docker compose build
 ```
 
-Open http://localhost:3000. On Windows PowerShell with script execution disabled,
-use `npm.cmd` in place of `npm`. Docker Desktop must run Linux containers.
+When GPU memory is available, start the deployment with `docker compose up -d --wait`.
+Open http://localhost:3000. Compose contains only `web` and `inference`; web binds
+port 3000 to loopback. Run one web instance against the data/profile volumes.
+Existing database, resource and output volumes are retained; startup migrates the
+schema automatically. Admin login is removed. Same-origin mutation checks remain;
+`APP_ORIGIN` must match the URL used to open the dashboard. The internal secret now
+protects inference only. Old admin secret files are no longer used.
 
-Start with the [specification index](docs/specification/README.md). It links ten
-chapters covering requirements, architecture, written data schemas, browser and
-model contracts, recovery, dashboard APIs, and acceptance scenarios.
+To scrape while signed in to a website:
 
-The intended deployment uses Docker Compose, Next.js, a separate TypeScript
-worker, Chromium/Playwright, SQLite, and a separate internal Unsloth inference
-service targeting Qwen3.5 9B with 32 Ki active attention tokens. The web/API,
-browser worker, and GPU model runtime remain separate because they have different
-security and failure boundaries. SQLite and the artifact volumes are deliberately
-local and single-host; this is a modular monolith with isolated runtimes, not a
-horizontally scalable service fleet. The inference service is the sole
-model-serving boundary and is not exposed through the public gateway. Model
-weights must be provisioned into the local model cache before use; the runtime
-does not download or silently substitute weights. The inference container is
-reachable only from the worker’s dedicated internal network; dashboard health
-is relayed through an authenticated worker endpoint. The dashboard can upload
-PDF applicant resources, queue bounded extraction, and ask grounded questions
-about the user using confirmed facts and extracted document segments.
-Implementation agents should follow the dependency order and release gates in
-[chapter 10](docs/specification/10-acceptance-and-handoff.md).
+1. Add a source on the dashboard. Set its start URL to the job results page you want
+   scanned, and enable it.
+2. If sign-in redirects to another website, add that website's origin under
+   **Allowed website and login origins**, then save.
+3. Choose **Sign in / manage browser**, then **Open browser**. Click the website
+   image to focus a field; use **Send text**, Tab and Enter to complete sign-in,
+   including any manual verification the website requires.
+4. Choose **Save session and release to agent**, then queue a discovery scan.
+   The agent reuses that source's profile, local storage and saved cookies,
+   including session cookies. To log out, reopen the source browser, log out on
+   the website, and save/release again.
+
+Browser profiles are isolated per source and persist in the `browser-profiles`
+volume. An open user session prevents automation from using that source; scans
+report `BROWSER_SESSION_BUSY` until it is released. Idle user sessions save and
+close after 15 minutes. Source settings cannot change while its browser is open.
+Credentials are entered directly into the website and are not sent to inference.
+
+Discovery waits for rendered job content, prefers structured `JobPosting` data,
+and falls back to filtered job links. It deduplicates URLs before applying the
+100-listing limit per source, refreshes listing metadata, and reports failed HTTP,
+login-required and empty/unsupported pages. It scans the configured page; automatic
+pagination and site-specific form/submission automation are not implemented.
+Some websites may refuse automated browsers even after manual sign-in. Pause and
+cancel take effect at source boundaries; resume rechecks sources within the same
+run and deduplicates persisted results. Interrupted active jobs are marked failed
+on server restart, so they can be retried explicitly.
+
+CPU-only verification (no containers or inference required):
+
+```sh
+npm run typecheck
+npm test
+npm run build
+node scripts/smoke-web.mjs
+node scripts/dashboard-qa.mjs
+docker compose config --quiet
+docker compose build web
+```
+
+On Windows PowerShell with script execution disabled, use `npm.cmd`. Native
+Next.js development also needs Playwright Chromium (`npx playwright install chromium`)
+and the native Chrome channel for dashboard QA (`channel: 'chrome'`; Chrome must be installed)
+and writable absolute `DB_PATH`, `PROFILE_ROOT`, `RESOURCE_ROOT`, `OUTPUT_ROOT` and
+`DIAGNOSTIC_ROOT` environment paths. Set `INTERNAL_SECRET_FILE` to the generated
+internal secret and `LLM_BASE_URL` to the inference endpoint before running `npm run dev`.
+
+The older specification chapters describe a separate worker and admin login;
+these operational instructions supersede that deployment model. Legacy session
+tables and auth endpoints remain for database/API compatibility but do not gate
+local access.

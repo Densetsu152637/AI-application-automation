@@ -6,7 +6,8 @@ export function controlRun(db: Database.Database, id: string, kind: 'pause_run' 
   const row = db.prepare('SELECT id,revision,state,pause_requested,cancel_requested FROM scan_runs WHERE id=?').get(id) as { id: string; revision: number; state: string; pause_requested: number; cancel_requested: number } | undefined;
   if (!row) return { error: 'NOT_FOUND', status: 404 } as const;
   if (row.revision !== expected) return { error: 'REVISION_CONFLICT', status: 409, currentRevision: row.revision } as const;
-  if (['completed', 'failed', 'cancelled'].includes(row.state)) return { error: 'STATE_CONFLICT', status: 409, currentRevision: row.revision } as const;
+  if (['completed', 'failed', 'cancelled', 'partial'].includes(row.state)) return { error: 'STATE_CONFLICT', status: 409, currentRevision: row.revision } as const;
+  if (kind === 'resume_run' && row.state !== 'paused') return { error: 'STATE_CONFLICT', status: 409, currentRevision: row.revision } as const;
   const now = isoNow(); const revision = row.revision + 1;
   const fields = kind === 'pause_run' ? 'pause_requested=1' : kind === 'cancel_run' ? 'cancel_requested=1' : 'pause_requested=0,state=\'running\'';
   const operationId = randomUUID();

@@ -197,17 +197,14 @@ test('dashboard polls operation state reactively without reloading the page', ()
   assert.match(source, /window\.setInterval\(poll, operationPollFailures >= 3 \? 10_000 : 2_000\)/);
   assert.match(source, /Active operations/);
   assert.match(source, /aria-live="polite"/);
-  assert.match(source, /stale.*last updated/);
+  assert.match(source, /Updates delayed.*formatDate\(operationLastUpdated\)/);
 });
 
-test('worker health is the authenticated model-status boundary', () => {
-  const worker = readFileSync(join(repositoryRoot, 'services', 'worker', 'src', 'main.ts'), 'utf8');
+test('backend health reports runtime and model status', () => {
   const health = readFileSync(join(repositoryRoot, 'apps', 'web-app', 'app', 'api', 'health', 'route.ts'), 'utf8');
-  assert.match(worker, /\/internal\/health/);
-  assert.match(worker, /timingSafeEqual/);
-  assert.match(worker, /LLM_BASE_URL.*\/models/);
-  assert.match(health, /worker:3001\/internal\/health/);
-  assert.match(health, /INTERNAL_SECRET_FILE/);
+  assert.match(health, /runtimeStatus/);
+  assert.match(health, /LLM_BASE_URL/);
+  assert.match(health, /models/);
 });
 
 test('migrations are contiguous and ledger versions match filenames', () => {

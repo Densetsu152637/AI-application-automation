@@ -2,7 +2,7 @@ import type { NextConfig } from 'next';
 const config: NextConfig = {
   poweredByHeader: false,
   transpilePackages: ['@aaa/contracts', '@aaa/domain', '@aaa/adapters'],
-  serverExternalPackages: ['better-sqlite3'],
+  serverExternalPackages: ['better-sqlite3', 'playwright', 'playwright-core'],
   async rewrites() {
     return [{ source: '/api/v1/:path*', destination: '/api/:path*' }];
   },

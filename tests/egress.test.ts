@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { isPublicAddress, validateEgressUrl, validateResolvedEgressUrl } from '../packages/domain/src/egress.ts';
 test('egress rejects private, loopback, mapped, and unsupported destinations', () => {
-  for (const address of ['10.0.0.1', '127.0.0.1', '169.254.1.2', '192.168.1.1', '::1', 'fd00::1', '::ffff:192.168.1.2']) assert.equal(isPublicAddress(address), false);
+  for (const address of ['10.0.0.1', '127.0.0.1', '169.254.1.2', '192.168.1.1', '::1', 'fd00::1', '::ffff:192.168.1.2', '0:0:0:0:0:ffff:c0a8:0102']) assert.equal(isPublicAddress(address), false);
+  assert.equal(isPublicAddress('::ffff:8.8.8.8'), true);
+  assert.equal(isPublicAddress('0:0:0:0:0:ffff:0808:0808'), true);
   assert.deepEqual(validateEgressUrl('http://127.0.0.1/', ['http://127.0.0.1']), { allowed: false, code: 'PRIVATE_ADDRESS' });
   const file = validateEgressUrl('file:///tmp/a', ['file:///tmp']); assert.equal('code' in file ? file.code : '', 'UNSUPPORTED_PROTOCOL');
 });

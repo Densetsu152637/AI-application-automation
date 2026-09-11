@@ -40,12 +40,11 @@ test('inference lifecycle timeouts are bounded in Compose', () => {
   assert.match(source, /INFERENCE_UNLOAD_TIMEOUT_INVALID/);
 });
 
-test('inference is isolated to the worker network and model requests are bounded', () => {
+test('inference is isolated to the backend network and model requests are bounded', () => {
   const compose = readFileSync(join(process.cwd(), 'compose.yml'), 'utf8');
   const health = readFileSync(join(process.cwd(), 'apps', 'web-app', 'app', 'api', 'health', 'route.ts'), 'utf8');
-  assert.match(compose, /networks: \[backend, inference, egress\]/);
+  assert.match(compose, /networks: \[inference, egress\]/);
   assert.match(compose, /networks: \[inference\]/);
-  assert.match(compose, /networks: \[frontend, backend\]/);
   assert.match(compose, /count: 1/);
   assert.match(compose, /INFERENCE_MEMORY_LIMIT/);
   assert.match(compose, /source: \$\{MODEL_SEARCH_ROOT:-D:\/AI-Models\}/);
@@ -53,6 +52,6 @@ test('inference is isolated to the worker network and model requests are bounded
   assert.match(source, /@app\.get\("\/ready"\)/);
   assert.match(source, /MODEL_LOAD_FAILED/);
   assert.match(source, /message exceeds 32768 bytes/);
-  assert.match(health, /internal\/health/);
+  assert.doesNotMatch(health, /worker:3001\/internal\/health/);
   assert.match(health, /authorization/);
 });

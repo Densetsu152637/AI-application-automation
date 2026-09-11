@@ -8,7 +8,7 @@ const infrastructureUrl = z.url().refine(value => {
 const file = z.string().refine(isAbsolute);
 export const deploymentSchema = z.object({
   APP_ORIGIN: infrastructureUrl.default('http://localhost:3000').refine(v => new URL(v).pathname === '/'),
-  ADMIN_SECRET_FILE: file, INTERNAL_SECRET_FILE: file,
+  INTERNAL_SECRET_FILE: file,
   LLM_BASE_URL: infrastructureUrl.default('http://inference:8000/v1'),
   LLM_MODEL_ID: z.string().trim().default('Qwen3.5-9B'),
   LLM_API_KEY_FILE: file.optional(),
@@ -25,9 +25,8 @@ export function readDeployment() {
   const parsed = deploymentSchema.safeParse(process.env);
   if (!parsed.success) throw new Error('CONFIG_INVALID');
   const config = parsed.data;
-  const admin = readFileSync(config.ADMIN_SECRET_FILE, 'utf8').trim();
   const internal = readFileSync(config.INTERNAL_SECRET_FILE, 'utf8').trim();
-  if (admin.length < 32 || internal.length < 32 || admin === internal) throw new Error('SECRET_INVALID');
+  if (internal.length < 32) throw new Error('SECRET_INVALID');
   if (config.LLM_API_KEY_FILE && !readFileSync(config.LLM_API_KEY_FILE, 'utf8').trim()) throw new Error('SECRET_INVALID');
   return config;
 }

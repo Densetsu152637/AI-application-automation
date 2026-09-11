@@ -11,8 +11,7 @@
     "dev": "npm run dev --workspace @aaa/web",
     "build": "npm run build --workspace @aaa/web",
     "typecheck": "tsc --noEmit && npm run typecheck --workspace @aaa/web",
-    "test": "tsx --test tests/*.test.ts",
-    "worker": "tsx services/worker/src/main.ts"
+    "test": "tsx --test tests/*.test.ts"
   },
   "devDependencies": {"@types/node": "22.20.1", "typescript": "5.9.3", "tsx": "4.23.13"}
 }

@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3';
 import { readFileSync } from 'node:fs';
-export const schemaVersion = 17;
+export const schemaVersion = 18;
 export function openDatabase(path: string) {
   const db = new Database(path);
   db.pragma('busy_timeout = 5000');
@@ -82,6 +82,20 @@ export function migrate(db: Database.Database) {
       db.pragma('user_version = 17');
     }
   }).immediate();
+  // SQLite table rebuilds require foreign key enforcement disabled outside the transaction.
+  if ((db.pragma('user_version', { simple: true }) as number) < 18) {
+    db.pragma('foreign_keys = OFF');
+    try {
+      db.transaction(() => {
+        // Recheck under the write lock: another connection may have completed the migration.
+        if ((db.pragma('user_version', { simple: true }) as number) >= 18) return;
+        db.exec(readFileSync(new URL('../migrations/018-run-state.sql', import.meta.url), 'utf8'));
+        if ((db.pragma('foreign_key_check') as unknown[]).length) throw new Error('SCHEMA_INCOMPATIBLE');
+        db.pragma('user_version = 18');
+      }).immediate();
+    } finally { db.pragma('foreign_keys = ON'); }
+  }
+
 }
 export function assertSchema(db: Database.Database) {
   if (db.pragma('user_version', { simple: true }) !== schemaVersion) throw new Error('SCHEMA_INCOMPATIBLE');

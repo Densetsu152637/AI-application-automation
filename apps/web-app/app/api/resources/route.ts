@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   const bytes = Buffer.from(await file.arrayBuffer()); if (bytes.length > 20 * 1024 * 1024 || bytes.subarray(0, 5).toString('ascii') !== '%PDF-') return apiError('INVALID_REQUEST', 400, rid);
   const sha256 = createHash('sha256').update(bytes).digest('hex'); const hash = bodyHash({ name, sha256, size: bytes.length }); const db = appDb();
   try { const scope = idempotencyScope(request, '/api/v1/resources', 'administrator'); const prior = findIdempotency(db, scope, key, hash); if (prior === 'CONFLICT') return apiError('IDEMPOTENCY_CONFLICT', 409, rid); if (prior) return apiOk(prior.body, prior.status, rid);
-    const root = process.env.RESOURCES_ROOT ?? '/resources'; const tmp = join(root, `.${randomUUID()}.tmp`); await mkdir(root, { recursive: true }); await writeFile(tmp, bytes, { flag: 'wx' }); await rename(tmp, join(root, name));
+    const root = process.env.RESOURCES_ROOT ?? '/resources'; const tmp = join(root, `.${randomUUID()}.tmp`); await mkdir(root, { recursive: true }); await writeFile(tmp, bytes, { flag: 'wx' }); await rename(tmp, join(/* turbopackIgnore: true */ root, name));
     const operationId = randomUUID(); const now = isoNow(); const data = { operationId, state: 'queued', relativePath: name, mediaType: 'application/pdf', sizeBytes: bytes.length, sha256 };
     db.transaction(() => { db.prepare("INSERT INTO operations (id,kind,state,progress,error_code,created_at,updated_at,target_id) VALUES (?, 'reindex', 'queued', 0, NULL, ?, ?, NULL)").run(operationId, now, now); saveIdempotency(db, scope, key, hash, 202, data, now); })(); return apiOk(data, 202, rid);
   } catch { return apiError('RESOURCE_UPLOAD_FAILED', 500, rid); } finally { db.close(); }

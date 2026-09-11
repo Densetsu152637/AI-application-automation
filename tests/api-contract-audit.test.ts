@@ -17,12 +17,12 @@ function routePath(file: string): string {
 const files = routeFiles();
 const sourceByPath = new Map(files.map(file => [routePath(file), readFileSync(file, 'utf8')]));
 
-test('implemented domain routes require authentication', () => {
-  const publicRoutes = new Set(['/api/auth/login', '/api/auth/logout', '/api/auth/session', '/api/health']);
-  const violations = files.filter(file => !publicRoutes.has(routePath(file)))
-    .filter(file => { const source = sourceByPath.get(routePath(file))!; return !source.includes('requireSession') && !source.includes('authenticatedSessionBinding'); })
-    .map(routePath);
-  assert.deepEqual(violations, [], `protected routes without an auth guard:\n${violations.join('\n')}`);
+test('local domain routes have no login requirement and mutations retain origin guards', () => {
+  const auth = readFileSync(join(process.cwd(), 'apps', 'web-app', 'lib', 'auth.ts'), 'utf8');
+  assert.match(auth, /requireSession\(\): Promise<boolean> \{ return true; \}/);
+  for (const path of ['/api/resources', '/api/sources', '/api/profile']) {
+    assert.match(sourceByPath.get(path)!, /requireMutationOrigin/);
+  }
 });
 
 test('intervention mutations enforce revision preconditions', () => {
