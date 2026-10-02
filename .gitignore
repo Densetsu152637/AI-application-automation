@@ -11,4 +11,5 @@ output/*
 *.sqlite*
 coverage/
 **/agents.md
-.agents/
+agents.md
+agents.*.md
