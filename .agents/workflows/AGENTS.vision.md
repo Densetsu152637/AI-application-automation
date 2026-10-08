@@ -2,34 +2,31 @@
 
 ## Specialized capability ceiling
 
-This file contains only vision-specific additions and the scoped capability exception below.
+Use the [manager ceiling rules](AGENTS.manager.md#capability-ceilings) and [model selection](AGENTS.manager.md#model-and-effort-selection) to dispatch and configure visual assignments. This section owns vision qualification and the scoped maximum:
 
-Only assignments that inspect actual visual inputs receive this enhanced ceiling, using the base policy's tier definitions:
+| Selected preset | Maximum vision tier |
+| --------------- | ------------------- |
+| light | Specialist with verified vision capability |
+| balanced | Frontier with verified vision capability |
+| heavy | Frontier with verified vision capability |
 
-| Selected preset | Maximum vision tier                        |
-| --------------- | ------------------------------------------ |
-| light           | Specialist with verified vision capability |
-| balanced        | Frontier with verified vision capability   |
-| heavy           | Frontier with verified vision capability   |
+- The scoped ceiling replaces the general ceiling only for assignments inspecting actual visual inputs. It remains available through a cheaper general manager. Verify both visual capability and image access; text-only summaries do not constitute image QA.
+- Managers, code writers, image-generation orchestration, and text-only reviewers retain the general ceiling. Do not pass this exception to unrelated descendants; split mixed assignments into visual inspection and general execution.
+- Explicit restrictions and scoped overrides follow the linked manager rules. Every selected visual model must have verified vision support; select sufficient capability for input detail and ambiguity.
 
-- Resolve this ceiling before selecting or dispatching the vision worker. It replaces the inherited general ceiling for the visual assignment. Under balanced, the effective vision ceiling is Frontier even when the immediate manager's general ceiling is Specialist; do not take the minimum of these two ceilings. Record both ceilings and the worker's effective ceiling in the delegation brief, and configure the actual worker model and any host per-worker cap accordingly. Explicit visual, user-wide, or subtree vision restrictions still apply.
-- Verify both visual capability and access to the image inputs; a text-only summary does not constitute image QA.
-- The user can override the visual cap separately: `use light preset with vision ceiling heavy` permits frontier vision workers alongside economy general workers. `vision ceiling light`, `balanced`, and `heavy` use the base policy's economy, specialist, and frontier ceilings respectively, each requiring verified vision support. The explicit visual cap replaces the table's visual default and persists for the task until changed.
-- A user-wide cap such as `all agents at most economy tier` also constrains vision workers unless the user explicitly exempts them.
-- Only the visual assignment gets the enhanced ceiling. Managers, code writers, image-generation orchestration, and text-only reviewers retain the general ceiling. An enhanced vision worker must not pass its exception to unrelated descendants. A mixed assignment should be split into visual inspection and general execution.
+## Visual inputs
 
-## Inputs and delegation
+Use [manager dispatch](AGENTS.manager.md#dispatch-and-acceptance), the [leaf workflow](AGENTS.leaf.md) for leaf inspectors, and [coordination](../guides/subagent-coordination.md) for handoffs/recovery.
 
-- Give each vision worker exact paths or accessible image references for the current outputs and necessary comparisons, plus intended style, acceptance criteria, viewing scale, and specific questions. Identify version/commit or another stable artifact identifier.
-- Provide actual image inputs through supported tools. For PDFs, slides, or UI work, supply the relevant rendered pages/screens and source paths. For layout-sensitive work, include a full view plus detail crops where useful; do not judge unseen regions.
-- Split visual inspection by image batches, pages, screens, or evaluation dimensions. Keep batches small enough to detect the required detail at the supported resolution; do not duplicate review of unchanged passing assets without a relevant reason.
+- Supply current outputs and comparisons as accessible image paths/references, plus intended style, viewing scale, acceptance criteria, and specific questions in the assignment brief.
+- Inspect actual rendered pages/screens for PDFs, slides, or UI. Include a full view plus detail crops when useful; do not judge unseen regions or inaccessible/insufficient-resolution inputs.
+- Split by image batch, page, screen, or evaluation dimension. Keep batches small enough to detect required detail at supported resolution.
 
 ## Inspection and repair loop
 
-1. Inspect the actual pixels against the brief. Check relevant anatomy/geometry, text accuracy, clipping, blur, lighting, style consistency, layout, contrast, alignment, and rendering defects. For interactive UI, combine visual inspection with functional checks; screenshots alone cannot prove behavior.
-2. Return a per-artifact verdict: pass, fail, or unable to verify. For defects, include location, severity, observable evidence, and a specific correction. Separate measured findings from subjective preferences and uncertain interpretations.
-3. The immediate manager may make a simple correction directly under the shared delegation criteria; otherwise send defects and exact affected paths to the assigned editing worker. The editor adjusts source, prompt, assets, or supported rendering/generation settings and produces a new stable revision. Direct execution retains the general capability ceiling and file-ownership requirements.
-4. Reinspect changed assets and dependent areas. Record which revision passed; approval of an earlier render does not approve later edits.
-5. Allow at most three repair/recheck retries after the initial failure. Stop earlier when blocked or the same defect repeats without progress. Preserve the best output and report remaining defects and the next useful decision through the immediate manager. This repair limit is unrelated to delegation depth.
+1. Inspect pixels for relevant anatomy/geometry, text accuracy, clipping, blur, lighting, style consistency, layout, contrast, alignment, and rendering defects. For interactive UI, also perform functional checks; screenshots alone cannot prove behavior.
+2. Return per-artifact pass/fail/unable-to-verify findings with location, severity, observable evidence, and correction. Separate measured defects from preferences and uncertain interpretations.
+3. Route repairs through the [manager workflow](AGENTS.manager.md#recursive-delegation) to the assigned editor. The editor produces a stable new revision. Apply [shared validation rules](../guides/validation.md#shared-validation-rules) to reinspection; include changed assets and dependent visual regions.
+4. Allow at most three repair/recheck retries after the initial failure, subject to tighter user/assignment limits. This visual-repair allowance replaces the [shared recovery default](../guides/subagent-coordination.md#stalls-and-recovery); other recovery mechanics remain there.
 
-Do not mark visual work complete when inputs were inaccessible or too low-resolution to evaluate. Report the exact inspection limitation and complete unaffected checks.
+Report the exact inspection limitation for inaccessible or inadequate inputs and complete unaffected checks; do not mark visual acceptance passed without usable visual evidence.

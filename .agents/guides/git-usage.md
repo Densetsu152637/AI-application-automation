@@ -50,10 +50,10 @@ git -C "<new-worktree-path>" status --short --branch
 
 ## Integration
 
-1. Each worker hands off its worktree path, branch, base and result commits (or scoped patch if commits are not authorized), changed paths, interface impacts, checks, and unresolved issues. Stop writes to the handed-off revision while it is being integrated.
+1. Use the [coordination result contract](subagent-coordination.md#assignment-and-result-contracts) and [result schema](../templates/subagent-result.md) for worker handoffs; include the assigned Git checkout/branch and commit or scoped patch. Hand off only a stable result.
 2. One integration owner applies results in dependency order in the assigned integration checkout. Use the repository's merge/cherry-pick convention; do not blindly apply both a branch merge and its commits.
 3. Resolve conflicts by understanding both changes and their contracts. Coordinate unclear intent with the responsible manager. Do not accept all of one side or discard unrelated edits to make conflicts disappear.
-4. Inspect the combined diff and run required checks against the integrated revision. Isolated passing branches do not establish that their combination passes. Record the revision tested and rerun affected checks after relevant changes.
+4. Inspect the combined diff and apply [shared validation rules](validation.md#shared-validation-rules) to the integrated revision.
 5. Pause only the dependent integration step when blocked; continue independent authorized work. Report unresolved conflicts and failing checks explicitly.
 
 ## Pull requests and merge rules

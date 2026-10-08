@@ -73,6 +73,5 @@ React effects must handle their background promises and cancel in-flight work on
 ## Validation and completion
 
 - Add or update behavior-focused tests for changed behavior and material regressions. Cover relevant edge cases and failure paths; do not write tests that merely mirror the implementation or add runtime tests for prose-only changes.
-- Run required format/lint, type/build, and focused test checks from the relevant project README/configuration. For the web-app above, verify its scripts before using `npm run lint`, `npm run typecheck`, and `npm test` or documented Docker equivalents.
+- Include required format/lint, type/build, and focused tests from the project's actual scripts. Apply [shared validation rules](validation.md#shared-validation-rules) for execution, evidence, integrated results, and affected rechecks.
 - Review the final diff for unintended behavior, unrelated edits, exposed secrets, stale documentation, and resource/error handling. Measure before claiming a performance improvement.
-- Report the exact checks performed and material unrun/failed checks. After integration or further edits, rerun checks whose result could have changed; do not repeat unaffected passing checks without cause.

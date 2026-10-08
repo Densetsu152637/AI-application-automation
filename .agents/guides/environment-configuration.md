@@ -1,15 +1,21 @@
 # Environment configuration and secrets
 
-Discover the consuming project's configuration before running Compose: inspect its Compose files, README, scripts, documented env-file examples, and the names of required variables. Do not invent variable names or create runtime configuration as part of generic setup guidance. Keep the same env file and Compose options across related commands so inspection, build, start, exec, and diagnostics address the same project configuration.
+This guide owns environment wiring, sensitive configuration output, and secret handling. Load [Compose discovery and project identity](container-usage.md#discovery-and-project-identity) before inspecting or changing container configuration.
 
-Compose can use shell environment variables and `.env` or `--env-file` values to interpolate the Compose model. Those values are not automatically added to a container's environment: the service must wire them through `environment` or `env_file` (or another configured mechanism). Service-level `env_file` and the CLI `--env-file` have different roles. Check the project's Compose file and documentation to understand which is in use. `docker compose config` can render resolved configuration; treat its output as sensitive if it may include resolved credentials, and avoid copying it into logs, chat, or committed files.
+## Environment wiring
 
-Keep credentials out of source control, command examples, shell history, logs, and generated artifacts. Use the project's documented local secret mechanism, ignored local env file, or managed secret store. Commit only a deliberately sanitized example file with placeholder values when the project expects one. Verify ignore rules before creating a local credentials file, and never replace an existing user-owned secrets file.
+- Discover required variables and supported configuration from the consuming project's documentation and files. Do not invent variable names or create runtime configuration as generic setup guidance.
+- Compose shell variables and `.env`/`--env-file` values can interpolate the model. They do not automatically enter a container: the service must wire them through `environment`, `env_file`, or another configured mechanism.
+- Service-level `env_file` and CLI `--env-file` have different roles. Inspect the project's intended wiring before choosing or changing either.
 
-For services that need secrets, prefer the consuming project's supported secret mechanism and least-privilege access. Compose secrets are mounted into service containers and are distinct from ordinary environment variables; their source and availability depend on the configuration and deployment context. Do not assume that local Compose secrets have the same protection properties as an external production secret manager.
+## Configuration output
 
-References:
-[Compose environment variables](https://docs.docker.com/compose/how-tos/environment-variables/)
-[variable interpolation](https://docs.docker.com/compose/how-tos/environment-variables/variable-interpolation/)
-[Compose secrets](https://docs.docker.com/compose/how-tos/use-secrets/)
-[Docker Engine Swarm secrets](https://docs.docker.com/engine/swarm/secrets/).
+`docker compose config` may contain resolved credentials. Treat interpolated output as sensitive and avoid copying sensitive values into logs, chat, or committed files.
+
+## Secret handling
+
+- Keep credentials out of source control, command examples, shell history, logs, and generated artifacts. Use the project's supported local secret mechanism, ignored env file, or managed secret store. Verify ignore rules before creating a local credentials file; never replace a user-owned secret file.
+- Commit only deliberately sanitized examples with placeholders when the project expects them. Use least-privilege access and the supported secret mechanism.
+- Compose secrets are mounted files distinct from ordinary environment variables. Inspect their source/availability; do not assume local Compose secrets have the protection properties of an external production secret manager.
+
+References: [Compose environment variables](https://docs.docker.com/compose/how-tos/environment-variables/), [interpolation](https://docs.docker.com/compose/how-tos/environment-variables/variable-interpolation/), [Compose secrets](https://docs.docker.com/compose/how-tos/use-secrets/), [Docker Engine secrets](https://docs.docker.com/engine/swarm/secrets/).
